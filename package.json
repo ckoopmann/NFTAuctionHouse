@@ -6,6 +6,7 @@
   "author": "Christian Koopmann",
   "license": "MIT",
   "dependencies": {
+    "@openzeppelin/contracts": "^4.3.0",
     "hardhat": "^2.6.0"
   },
   "devDependencies": {
