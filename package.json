@@ -5,6 +5,9 @@
   "repository": "https://github.com/ckoopmann/ParetoMarket.git",
   "author": "Christian Koopmann",
   "license": "MIT",
+  "scripts": {
+      "test:contracts": "hardhat test"
+  },
   "dependencies": {
     "@openzeppelin/contracts": "^4.3.0",
     "hardhat": "^2.6.0"
