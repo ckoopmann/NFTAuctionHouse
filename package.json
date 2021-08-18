@@ -4,5 +4,8 @@
   "main": "index.js",
   "repository": "https://github.com/ckoopmann/ParetoMarket.git",
   "author": "Christian Koopmann",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "hardhat": "^2.6.0"
+  }
 }
