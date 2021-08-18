@@ -77,10 +77,10 @@ export default {
       clipped: true,
       drawer: false,
       constantItems: [
-        { icon: "mdi-magnify", title: "Search Vehicle", to: "/dapp/search" },
+        { icon: "mdi-magnify", title: "Search Item", to: "/dapp/search" },
         {
           icon: "mdi-plus-box",
-          title: "Register New Vehicle",
+          title: "Sell Item",
           to: "/dapp/new",
         },
       ],
