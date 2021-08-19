@@ -74,10 +74,11 @@ contract Market is Ownable, ReentrancyGuard {
       listingId = totalListingCount.current();
 
       // Register new Listing
-      listings[listingId] = Listing(_contractAddress, _tokenId, _startingPrice, msg.sender, msg.sender, ListingStatus.OPEN);
+      listings[listingId] = Listing(_contractAddress, _tokenId, _startingPrice, msg.sender, address(0), ListingStatus.OPEN);
       emit ListingCreated(listingId, _contractAddress, _tokenId, _startingPrice, msg.sender);
   }
 
+  // Get all Open Listings that have not yet been sold, expired or cancelled
   function getOpenListings() public view returns(Listing[] memory){
       uint256 openListingsCount = totalListingCount.current().sub(closedListingCount.current());
       uint resultIndex = 0;

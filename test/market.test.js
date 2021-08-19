@@ -96,7 +96,7 @@ describe("Market", function () {
       // Check that data is saved correctly
       const listing = await market.listings(listingId);
       expect(listing.seller).to.equal(owner.address);
-      expect(listing.highestBidder).to.equal(owner.address);
+      expect(listing.highestBidder).to.equal(ethers.constants.AddressZero);
       expect(listing.tokenId).to.equal(listingId);
       expect(listing.currentPrice).to.equal(startingPrice);
       expect(listing.contractAddress).to.equal(testERC721Contract.address);
