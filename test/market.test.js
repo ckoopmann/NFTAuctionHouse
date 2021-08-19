@@ -75,17 +75,17 @@ describe("Market", function () {
     });
 
     it("Succedes if contract is approved", async function () {
-      await testERC721Contract.connect(owner).approve(
-        market.address,
-        1
-      );
+      await testERC721Contract.connect(owner).approve(market.address, 1);
 
-      const createListingTx = await market.connect(owner).createListing(
-        testERC721Contract.address,
-        1,
-        startingPrice
-      );
-      createListingTx.wait();
+      await market
+        .connect(owner)
+        .createListing(testERC721Contract.address, 1, startingPrice);
+
+      const listing = await market.listings(1);
+      console.log(listing);
+
+      expect(listing.seller).to.equal(owner.address)
+      expect(listing.highestBidder).to.equal(owner.address)
     });
   });
 });
