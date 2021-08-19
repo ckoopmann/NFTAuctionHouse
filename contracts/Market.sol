@@ -54,8 +54,29 @@ contract Market is Ownable, ReentrancyGuard {
       address contractAddress,
       uint256 tokenId,
       uint256 startingPrice,
-      address creator
+      address seller
   );
+
+  event ListingCanceled(
+      uint256 listingId
+  );
+
+
+  // MODIFIERS
+  modifier openListing(uint256 listingId) {
+      require(listings[listingId].status == ListingStatus.OPEN, "Transaction only permissible for open Listings");
+        _;
+  }
+
+  modifier noBids(uint256 listingId) {
+      require(listings[listingId].highestBidder == address(0), "Listing has bids already");
+        _;
+  }
+
+  modifier sellerOnly(uint256 listingId) {
+      require(msg.sender == listings[listingId].seller, "Caller is not Seller");
+        _;
+  }
 
   // Calculate commission due for an listing based on its salePrice
   function calculateCommission(uint256 _salePrice) public view returns(uint256 commission){
@@ -92,6 +113,13 @@ contract Market is Ownable, ReentrancyGuard {
       }
 
       return openListings;
+  }
+
+  // Create Listing
+  function cancelListing(uint256 listingId) public openListing(listingId) noBids(listingId) sellerOnly(listingId) nonReentrant{
+      listings[listingId].status = ListingStatus.CANCELED;
+      closedListingCount.increment();
+      emit ListingCanceled(listingId);
   }
 
 }

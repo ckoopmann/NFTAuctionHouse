@@ -46,6 +46,7 @@ describe("Market", function () {
   context("create listing", () => {
     let startingPrice;
     let testERC721Contract;
+    let listingId;
 
     const tokenURI = "TESTTOKEN1";
     const baseURI = "BASERURI";
@@ -84,7 +85,6 @@ describe("Market", function () {
         .createListing(testERC721Contract.address, 1, startingPrice);
 
       // Wait for ListingCreated event and extract listingId from it
-      let listingId;
       const listingCreatedPromise = new Promise((resolve) => {
         market.once(market.filters.ListingCreated(), (_listingId, _) => {
           listingId = _listingId;
@@ -103,12 +103,37 @@ describe("Market", function () {
     });
 
     it("Can retrieve full list of open listings", async function () {
-
       // Retrieve all open listings
       const openListings = await market.getOpenListings();
 
       expect(openListings.length).to.equal(1);
     });
 
+    it("Cannot cancel listing if not seller", async function () {
+      const [_, otherAccount] = await ethers.getSigners();
+      await expect(
+        market.connect(otherAccount).cancelListing(1)
+      ).to.be.revertedWith("Caller is not Seller");
+    });
+
+    it("Seller can cancel listing", async function () {
+      const openListingsBefore = await market.getOpenListings();
+
+      const cancelTx = await market.connect(owner).cancelListing(1);
+
+      // Wait for ListingCanceled event
+      const listingCanceledPromise = new Promise((resolve) => {
+        market.once(market.filters.ListingCanceled(), (_listingId, _) => {
+          expect(_listingId).to.equal(1);
+          resolve();
+        });
+      });
+      await listingCanceledPromise;
+
+
+      const openListingsAfter = await market.getOpenListings();
+
+      expect(openListingsBefore.length - 1).to.equal(openListingsAfter.length);
+    });
   });
 });
