@@ -75,17 +75,40 @@ describe("Market", function () {
     });
 
     it("Succedes if contract is approved", async function () {
+      // Approve the market contract such that it can transfer the NFT
       await testERC721Contract.connect(owner).approve(market.address, 1);
 
+      // Create Listing
       await market
         .connect(owner)
         .createListing(testERC721Contract.address, 1, startingPrice);
 
-      const listing = await market.listings(1);
-      console.log(listing);
+      // Wait for ListingCreated event and extract listingId from it
+      let listingId;
+      const listingCreatedPromise = new Promise((resolve) => {
+        market.once(market.filters.ListingCreated(), (_listingId, _) => {
+          listingId = _listingId;
+          resolve();
+        });
+      });
+      await listingCreatedPromise;
 
-      expect(listing.seller).to.equal(owner.address)
-      expect(listing.highestBidder).to.equal(owner.address)
+      // Check that data is saved correctly
+      const listing = await market.listings(listingId);
+      expect(listing.seller).to.equal(owner.address);
+      expect(listing.highestBidder).to.equal(owner.address);
+      expect(listing.tokenId).to.equal(listingId);
+      expect(listing.currentPrice).to.equal(startingPrice);
+      expect(listing.contractAddress).to.equal(testERC721Contract.address);
     });
+
+    it("Can retrieve full list of open listings", async function () {
+
+      // Retrieve all open listings
+      const openListings = await market.getOpenListings();
+
+      expect(openListings.length).to.equal(1);
+    });
+
   });
 });

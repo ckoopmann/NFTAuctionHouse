@@ -27,7 +27,7 @@ contract Market is Ownable, ReentrancyGuard {
   // Number of listings ever listed
   Counters.Counter private totalListingCount;
   // Number of listings already sold
-  Counters.Counter private soldListingCount;
+  Counters.Counter private closedListingCount;
 
   enum TokenType { NONE, ERC721, ERC1155 }
   enum ListingStatus { NONE, OPEN, SOLD, NOTSOLD, CANCELED }
@@ -48,6 +48,15 @@ contract Market is Ownable, ReentrancyGuard {
       minimumCommission = _minimumCommission;
   }
 
+  // EVENTS
+  event ListingCreated(
+      uint256 listingId,
+      address contractAddress,
+      uint256 tokenId,
+      uint256 startingPrice,
+      address creator
+  );
+
   // Calculate commission due for an listing based on its salePrice
   function calculateCommission(uint256 _salePrice) public view returns(uint256 commission){
       commission  = commissionPercentage.mul(_salePrice).div(1 ether);
@@ -66,9 +75,22 @@ contract Market is Ownable, ReentrancyGuard {
 
       // Register new Listing
       listings[listingId] = Listing(_contractAddress, _tokenId, _startingPrice, msg.sender, msg.sender, ListingStatus.OPEN);
-      
+      emit ListingCreated(listingId, _contractAddress, _tokenId, _startingPrice, msg.sender);
   }
-  
 
+  function getOpenListings() public view returns(Listing[] memory){
+      uint256 openListingsCount = totalListingCount.current().sub(closedListingCount.current());
+      uint resultIndex = 0;
+
+      Listing[] memory openListings = new Listing[](openListingsCount);
+      for(uint i = 1; i <= totalListingCount.current(); i++){
+          if(listings[i].status == ListingStatus.OPEN){
+              openListings[resultIndex] = listings[i];
+              resultIndex++;
+          }
+      }
+
+      return openListings;
+  }
 
 }
