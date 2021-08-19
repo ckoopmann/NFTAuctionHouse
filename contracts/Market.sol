@@ -119,6 +119,7 @@ contract Market is Ownable, ReentrancyGuard {
   function cancelListing(uint256 listingId) public openListing(listingId) noBids(listingId) sellerOnly(listingId) nonReentrant{
       listings[listingId].status = ListingStatus.CANCELED;
       closedListingCount.increment();
+      IERC721(listings[listingId].contractAddress).transferFrom(address(this), msg.sender, listings[listingId].tokenId);
       emit ListingCanceled(listingId);
   }
 
