@@ -240,6 +240,10 @@ describe("Market", function () {
       await market
         .connect(firstBidder)
         .placeBid(auctionId, validPrice, { value });
+
+      const auctionDetails = await market.auctions(auctionId)
+      expect(auctionDetails.highestBidder).to.equal(firstBidder.address)
+      expect(auctionDetails.currentPrice).to.equal(validPrice)
     });
   });
 

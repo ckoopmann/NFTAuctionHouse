@@ -38,7 +38,7 @@ contract Market is Ownable, ReentrancyGuard {
   Counters.Counter private closedAuctionCount;
 
   enum TokenType { NONE, ERC721, ERC1155 }
-  enum AuctionStatus { NONE, OPEN, SOLD, NOTSOLD, CANCELED }
+  enum AuctionStatus { NONE, OPEN, SETTLED, CANCELED }
 
   struct Auction {
       address contractAddress;
@@ -71,6 +71,11 @@ contract Market is Ownable, ReentrancyGuard {
 
   event AuctionCanceled(
       uint256 auctionId
+  );
+
+  event AuctionSettled(
+      uint256 auctionId,
+      bool sold
   );
 
   event BidPlaced(
@@ -152,13 +157,32 @@ contract Market is Ownable, ReentrancyGuard {
       return openAuctions;
   }
 
-  // Create Auction
+  // Cancel auction that has no bids on it yet
   function cancelAuction(uint256 auctionId) public openAuction(auctionId) noBids(auctionId) sellerOnly(auctionId) nonReentrant{
       auctions[auctionId].status = AuctionStatus.CANCELED;
       closedAuctionCount.increment();
       IERC721(auctions[auctionId].contractAddress).transferFrom(address(this), msg.sender, auctions[auctionId].tokenId);
       emit AuctionCanceled(auctionId);
   }
+
+  // Settle Auction
+  function settleAuction(uint256 auctionId) public openAuction(auctionId) onlyExpiredAuction(auctionId) nonReentrant{
+      Auction storage auction = auctions[auctionId];
+      auction.status = AuctionStatus.SETTLED;
+      closedAuctionCount.increment();
+      
+      bool sold = auction.highestBidder == address(0);
+      if(sold){
+        IERC721(auction.contractAddress).transferFrom(address(this), auction.seller, auction.tokenId);
+      }
+      else{
+        IERC721(auction.contractAddress).transferFrom(address(this), auction.highestBidder, auction.tokenId);
+        refundUser(auction.seller, auction.currentPrice);
+      }
+      
+      emit AuctionSettled(auctionId, sold);
+  }
+
 
   // BIDDING
   function refundUser(address refundAddress, uint256 amount) private {
