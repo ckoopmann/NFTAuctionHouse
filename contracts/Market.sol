@@ -171,13 +171,13 @@ contract Market is Ownable, ReentrancyGuard {
       auction.status = AuctionStatus.SETTLED;
       closedAuctionCount.increment();
       
-      bool sold = auction.highestBidder == address(0);
+      bool sold = auction.highestBidder != address(0);
       if(sold){
-        IERC721(auction.contractAddress).transferFrom(address(this), auction.seller, auction.tokenId);
-      }
-      else{
         IERC721(auction.contractAddress).transferFrom(address(this), auction.highestBidder, auction.tokenId);
         refundUser(auction.seller, auction.currentPrice);
+      }
+      else{
+        IERC721(auction.contractAddress).transferFrom(address(this), auction.seller, auction.tokenId);
       }
       
       emit AuctionSettled(auctionId, sold);
