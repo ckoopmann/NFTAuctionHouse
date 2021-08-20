@@ -17,31 +17,31 @@ contract Market is Ownable, ReentrancyGuard {
   // Add math utilities missing in solidity
   using Math for uint256;
   
-  // Commission in percentage of sale price charged for every sold listing
+  // Commission in percentage of sale price charged for every sold auction
   uint256 public commissionPercentage;
   // Lower bound of total Commission charged per sale
   uint256 public minimumCommission;
 
 
   using Counters for Counters.Counter;
-  // Number of listings ever listed
-  Counters.Counter private totalListingCount;
-  // Number of listings already sold
-  Counters.Counter private closedListingCount;
+  // Number of auctions ever listed
+  Counters.Counter private totalAuctionCount;
+  // Number of auctions already sold
+  Counters.Counter private closedAuctionCount;
 
   enum TokenType { NONE, ERC721, ERC1155 }
-  enum ListingStatus { NONE, OPEN, SOLD, NOTSOLD, CANCELED }
+  enum AuctionStatus { NONE, OPEN, SOLD, NOTSOLD, CANCELED }
 
-  struct Listing {
+  struct Auction {
       address contractAddress;
       uint256 tokenId;
       uint256 currentPrice;
       address seller;
       address highestBidder;
-      ListingStatus status;
+      AuctionStatus status;
   }
 
-  mapping(uint256 => Listing) public listings;
+  mapping(uint256 => Auction) public auctions;
 
   constructor(uint256 _commissionPercentage, uint256 _minimumCommission) {
       commissionPercentage = _commissionPercentage;
@@ -49,78 +49,78 @@ contract Market is Ownable, ReentrancyGuard {
   }
 
   // EVENTS
-  event ListingCreated(
-      uint256 listingId,
+  event AuctionCreated(
+      uint256 auctionId,
       address contractAddress,
       uint256 tokenId,
       uint256 startingPrice,
       address seller
   );
 
-  event ListingCanceled(
-      uint256 listingId
+  event AuctionCanceled(
+      uint256 auctionId
   );
 
 
   // MODIFIERS
-  modifier openListing(uint256 listingId) {
-      require(listings[listingId].status == ListingStatus.OPEN, "Transaction only permissible for open Listings");
+  modifier openAuction(uint256 auctionId) {
+      require(auctions[auctionId].status == AuctionStatus.OPEN, "Transaction only permissible for open Auctions");
         _;
   }
 
-  modifier noBids(uint256 listingId) {
-      require(listings[listingId].highestBidder == address(0), "Listing has bids already");
+  modifier noBids(uint256 auctionId) {
+      require(auctions[auctionId].highestBidder == address(0), "Auction has bids already");
         _;
   }
 
-  modifier sellerOnly(uint256 listingId) {
-      require(msg.sender == listings[listingId].seller, "Caller is not Seller");
+  modifier sellerOnly(uint256 auctionId) {
+      require(msg.sender == auctions[auctionId].seller, "Caller is not Seller");
         _;
   }
 
-  // Calculate commission due for an listing based on its salePrice
+  // Calculate commission due for an auction based on its salePrice
   function calculateCommission(uint256 _salePrice) public view returns(uint256 commission){
       commission  = commissionPercentage.mul(_salePrice).div(1 ether);
       commission = commission.max(minimumCommission);
   }
 
-  // Create Listing
-  function createListing(address _contractAddress, uint256 _tokenId, uint256 _startingPrice) public nonReentrant returns(uint256 listingId){
+  // Create Auction
+  function createAuction(address _contractAddress, uint256 _tokenId, uint256 _startingPrice) public nonReentrant returns(uint256 auctionId){
 
       // Transfer NFT to market contract
       IERC721(_contractAddress).transferFrom(msg.sender, address(this), _tokenId);
 
-      // Generate Listing Id
-      totalListingCount.increment();
-      listingId = totalListingCount.current();
+      // Generate Auction Id
+      totalAuctionCount.increment();
+      auctionId = totalAuctionCount.current();
 
-      // Register new Listing
-      listings[listingId] = Listing(_contractAddress, _tokenId, _startingPrice, msg.sender, address(0), ListingStatus.OPEN);
-      emit ListingCreated(listingId, _contractAddress, _tokenId, _startingPrice, msg.sender);
+      // Register new Auction
+      auctions[auctionId] = Auction(_contractAddress, _tokenId, _startingPrice, msg.sender, address(0), AuctionStatus.OPEN);
+      emit AuctionCreated(auctionId, _contractAddress, _tokenId, _startingPrice, msg.sender);
   }
 
-  // Get all Open Listings that have not yet been sold, expired or cancelled
-  function getOpenListings() public view returns(Listing[] memory){
-      uint256 openListingsCount = totalListingCount.current().sub(closedListingCount.current());
+  // Get all Open Auctions that have not yet been sold, expired or cancelled
+  function getOpenAuctions() public view returns(Auction[] memory){
+      uint256 openAuctionsCount = totalAuctionCount.current().sub(closedAuctionCount.current());
       uint resultIndex = 0;
 
-      Listing[] memory openListings = new Listing[](openListingsCount);
-      for(uint i = 1; i <= totalListingCount.current(); i++){
-          if(listings[i].status == ListingStatus.OPEN){
-              openListings[resultIndex] = listings[i];
+      Auction[] memory openAuctions = new Auction[](openAuctionsCount);
+      for(uint i = 1; i <= totalAuctionCount.current(); i++){
+          if(auctions[i].status == AuctionStatus.OPEN){
+              openAuctions[resultIndex] = auctions[i];
               resultIndex++;
           }
       }
 
-      return openListings;
+      return openAuctions;
   }
 
-  // Create Listing
-  function cancelListing(uint256 listingId) public openListing(listingId) noBids(listingId) sellerOnly(listingId) nonReentrant{
-      listings[listingId].status = ListingStatus.CANCELED;
-      closedListingCount.increment();
-      IERC721(listings[listingId].contractAddress).transferFrom(address(this), msg.sender, listings[listingId].tokenId);
-      emit ListingCanceled(listingId);
+  // Create Auction
+  function cancelAuction(uint256 auctionId) public openAuction(auctionId) noBids(auctionId) sellerOnly(auctionId) nonReentrant{
+      auctions[auctionId].status = AuctionStatus.CANCELED;
+      closedAuctionCount.increment();
+      IERC721(auctions[auctionId].contractAddress).transferFrom(address(this), msg.sender, auctions[auctionId].tokenId);
+      emit AuctionCanceled(auctionId);
   }
 
 }

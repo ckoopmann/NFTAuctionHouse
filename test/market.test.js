@@ -43,10 +43,10 @@ describe("Market", function () {
     });
   });
 
-  context("create listing", () => {
+  context("create auction", () => {
     let startingPrice;
     let testERC721Contract;
-    let listingId;
+    let auctionId;
 
     const tokenURI = "TESTTOKEN1";
     const baseURI = "BASERURI";
@@ -71,7 +71,7 @@ describe("Market", function () {
 
     it("Fails if market contract is not approved for given token", async function () {
       await expect(
-        market.createListing(testERC721Contract.address, 1, startingPrice)
+        market.createAuction(testERC721Contract.address, 1, startingPrice)
       ).to.be.revertedWith("ERC721: transfer caller is not owner nor approved");
     });
 
@@ -79,61 +79,61 @@ describe("Market", function () {
       // Approve the market contract such that it can transfer the NFT
       await testERC721Contract.connect(owner).approve(market.address, 1);
 
-      // Create Listing
+      // Create Auction
       await market
         .connect(owner)
-        .createListing(testERC721Contract.address, 1, startingPrice);
+        .createAuction(testERC721Contract.address, 1, startingPrice);
 
-      // Wait for ListingCreated event and extract listingId from it
-      const listingCreatedPromise = new Promise((resolve) => {
-        market.once(market.filters.ListingCreated(), (_listingId, _) => {
-          listingId = _listingId;
+      // Wait for AuctionCreated event and extract auctionId from it
+      const auctionCreatedPromise = new Promise((resolve) => {
+        market.once(market.filters.AuctionCreated(), (_auctionId, _) => {
+          auctionId = _auctionId;
           resolve();
         });
       });
-      await listingCreatedPromise;
+      await auctionCreatedPromise;
 
       // Check that data is saved correctly
-      const listing = await market.listings(listingId);
-      expect(listing.seller).to.equal(owner.address);
-      expect(listing.highestBidder).to.equal(ethers.constants.AddressZero);
-      expect(listing.tokenId).to.equal(listingId);
-      expect(listing.currentPrice).to.equal(startingPrice);
-      expect(listing.contractAddress).to.equal(testERC721Contract.address);
+      const auction = await market.auctions(auctionId);
+      expect(auction.seller).to.equal(owner.address);
+      expect(auction.highestBidder).to.equal(ethers.constants.AddressZero);
+      expect(auction.tokenId).to.equal(auctionId);
+      expect(auction.currentPrice).to.equal(startingPrice);
+      expect(auction.contractAddress).to.equal(testERC721Contract.address);
     });
 
-    it("Can retrieve full list of open listings", async function () {
-      // Retrieve all open listings
-      const openListings = await market.getOpenListings();
+    it("Can retrieve full list of open auctions", async function () {
+      // Retrieve all open auctions
+      const openAuctions = await market.getOpenAuctions();
 
-      expect(openListings.length).to.equal(1);
+      expect(openAuctions.length).to.equal(1);
     });
 
-    it("Cannot cancel listing if not seller", async function () {
+    it("Cannot cancel auction if not seller", async function () {
       const [_, otherAccount] = await ethers.getSigners();
       await expect(
-        market.connect(otherAccount).cancelListing(1)
+        market.connect(otherAccount).cancelAuction(1)
       ).to.be.revertedWith("Caller is not Seller");
     });
 
-    it("Seller can cancel listing", async function () {
-      const openListingsBefore = await market.getOpenListings();
+    it("Seller can cancel auction", async function () {
+      const openAuctionsBefore = await market.getOpenAuctions();
 
-      const cancelTx = await market.connect(owner).cancelListing(1);
+      const cancelTx = await market.connect(owner).cancelAuction(1);
 
-      // Wait for ListingCanceled event
-      const listingCanceledPromise = new Promise((resolve) => {
-        market.once(market.filters.ListingCanceled(), (_listingId, _) => {
-          expect(_listingId).to.equal(1);
+      // Wait for AuctionCanceled event
+      const auctionCanceledPromise = new Promise((resolve) => {
+        market.once(market.filters.AuctionCanceled(), (_auctionId, _) => {
+          expect(_auctionId).to.equal(1);
           resolve();
         });
       });
-      await listingCanceledPromise;
+      await auctionCanceledPromise;
 
 
-      const openListingsAfter = await market.getOpenListings();
+      const openAuctionsAfter = await market.getOpenAuctions();
 
-      expect(openListingsBefore.length - 1).to.equal(openListingsAfter.length);
+      expect(openAuctionsBefore.length - 1).to.equal(openAuctionsAfter.length);
     });
   });
 });
