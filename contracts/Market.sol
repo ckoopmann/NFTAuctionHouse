@@ -177,9 +177,9 @@ contract Market is Ownable, ReentrancyGuard {
 
 
   function placeBid(uint256 auctionId, uint256 bidPrice) public payable openAuction(auctionId) nonExpiredAuction(auctionId) nonReentrant{
-      require(msg.value == bidPrice.add(calculateCommission(bidPrice)), "Transaction value has to equal price + commission");
       Auction storage auction = auctions[auctionId];
       require(bidPrice >= auction.currentPrice.add(minimumBidSize), "Bid has to exceed current price by the minimumBidSize or more");
+      require(msg.value == bidPrice.add(calculateCommission(bidPrice)), "Transaction value has to equal price + commission");
     
       // If this is not the first bid, refund the previous highest bidder
       address previousBidder = auction.highestBidder;
