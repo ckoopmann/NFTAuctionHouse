@@ -45,6 +45,7 @@ contract Market is Ownable, ReentrancyGuard {
       address seller;
       address highestBidder;
       AuctionStatus status;
+      uint256 expiryDate;
   }
 
   mapping(uint256 => Auction) public auctions;
@@ -61,7 +62,8 @@ contract Market is Ownable, ReentrancyGuard {
       address contractAddress,
       uint256 tokenId,
       uint256 startingPrice,
-      address seller
+      address seller,
+      uint256 expiryDate
   );
 
   event AuctionCanceled(
@@ -106,7 +108,7 @@ contract Market is Ownable, ReentrancyGuard {
 
   // AUCTION MANAGEMENT
   // Create Auction
-  function createAuction(address _contractAddress, uint256 _tokenId, uint256 _startingPrice) public nonReentrant returns(uint256 auctionId){
+  function createAuction(address _contractAddress, uint256 _tokenId, uint256 _startingPrice, uint256 expiryDate) public nonReentrant returns(uint256 auctionId){
 
       // Transfer NFT to market contract
       IERC721(_contractAddress).transferFrom(msg.sender, address(this), _tokenId);
@@ -116,8 +118,8 @@ contract Market is Ownable, ReentrancyGuard {
       auctionId = totalAuctionCount.current();
 
       // Register new Auction
-      auctions[auctionId] = Auction(_contractAddress, _tokenId, _startingPrice, msg.sender, address(0), AuctionStatus.OPEN);
-      emit AuctionCreated(auctionId, _contractAddress, _tokenId, _startingPrice, msg.sender);
+      auctions[auctionId] = Auction(_contractAddress, _tokenId, _startingPrice, msg.sender, address(0), AuctionStatus.OPEN, expiryDate);
+      emit AuctionCreated(auctionId, _contractAddress, _tokenId, _startingPrice, msg.sender, expiryDate);
   }
 
   // Get all Open Auctions that have not yet been sold, expired or cancelled
@@ -171,9 +173,10 @@ contract Market is Ownable, ReentrancyGuard {
         uint256 refundAmount = auction.currentPrice.add(calculateCommission(auction.currentPrice));
         refundUser(previousBidder, refundAmount);
       }
-
+    
       auction.highestBidder = msg.sender;
       auction.currentPrice = bidPrice;
       emit BidPlaced(auctionId, bidPrice);
   }
+  
 }

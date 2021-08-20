@@ -50,6 +50,10 @@ describe("Market", function () {
     let testERC721Contract;
     let auctionId;
 
+    // Expiry date 1 hour in the future
+    const validExpiryDate = Math.floor((new Date()).getTime() / 1000) + 60*60;
+
+
     const tokenURI = "TESTTOKEN1";
     const baseURI = "BASERURI";
 
@@ -73,7 +77,7 @@ describe("Market", function () {
 
     it("Fails if market contract is not approved for given token", async function () {
       await expect(
-        market.createAuction(testERC721Contract.address, 1, startingPrice)
+        market.createAuction(testERC721Contract.address, 1, startingPrice, validExpiryDate)
       ).to.be.revertedWith("ERC721: transfer caller is not owner nor approved");
     });
 
@@ -84,7 +88,7 @@ describe("Market", function () {
       // Create Auction
       await market
         .connect(owner)
-        .createAuction(testERC721Contract.address, 1, startingPrice);
+        .createAuction(testERC721Contract.address, 1, startingPrice, validExpiryDate);
 
       // Wait for AuctionCreated event and extract auctionId from it
       const auctionCreatedPromise = new Promise((resolve) => {
