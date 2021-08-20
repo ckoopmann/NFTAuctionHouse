@@ -5,6 +5,7 @@ describe("Market", function () {
   let commissionPercentage;
   let minimumCommission;
   let minimumBidSize;
+  let minimumAuctionLiveness;
   let market;
   let owner;
 
@@ -16,8 +17,10 @@ describe("Market", function () {
     commissionPercentage = utils.parseUnits("0.01");
     minimumCommission = utils.parseUnits("0.001");
     minimumBidSize = utils.parseUnits("0.0001");
+    // Auction has to be live for at least 10 minutes
+    minimumAuctionLiveness = 10*60;
 
-    market = await Market.deploy(commissionPercentage, minimumCommission, minimumBidSize);
+    market = await Market.deploy(commissionPercentage, minimumCommission, minimumBidSize, minimumAuctionLiveness);
     await market.deployed();
   });
 
@@ -81,9 +84,16 @@ describe("Market", function () {
       ).to.be.revertedWith("ERC721: transfer caller is not owner nor approved");
     });
 
-    it("Succedes if contract is approved", async function () {
-      // Approve the market contract such that it can transfer the NFT
+    it("Fails if Expiry date is not far enough in the future", async function () {
       await testERC721Contract.connect(owner).approve(market.address, 1);
+      const invalidExpiryDate = Math.floor((new Date()).getTime() / 1000) + 60
+      await expect(
+        market.createAuction(testERC721Contract.address, 1, startingPrice, invalidExpiryDate)
+      ).to.be.revertedWith("Expiry date is not far enough in the future");
+    });
+
+
+    it("Succedes if conditions are met", async function () {
 
       // Create Auction
       await market

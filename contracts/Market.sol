@@ -23,6 +23,8 @@ contract Market is Ownable, ReentrancyGuard {
   uint256 public minimumCommission;
   // Minimum amount by which a new bid has to exceed previousBid
   uint256 public minimumBidSize;
+  // Minimum duration in seconds for which the auction has to be live
+  uint256 public minimumAuctionLiveness;
 
   // Save Users refund balances (to be used when they are outbid)
   mapping(address => uint256) userRefunds;
@@ -50,10 +52,11 @@ contract Market is Ownable, ReentrancyGuard {
 
   mapping(uint256 => Auction) public auctions;
 
-  constructor(uint256 _commissionPercentage, uint256 _minimumCommission, uint256 _minimumBidSize) {
+  constructor(uint256 _commissionPercentage, uint256 _minimumCommission, uint256 _minimumBidSize, uint256 _minimumAuctionLiveness) {
       commissionPercentage = _commissionPercentage;
       minimumCommission = _minimumCommission;
       minimumBidSize = _minimumBidSize;
+      minimumAuctionLiveness = _minimumAuctionLiveness;
   }
 
   // EVENTS
@@ -89,6 +92,16 @@ contract Market is Ownable, ReentrancyGuard {
         _;
   }
 
+  modifier nonExpiredAuction(uint256 auctionId) {
+      require(auctions[auctionId].expiryDate >= block.timestamp, "Transaction not valid for expired Auctions");
+        _;
+  }
+
+  modifier onlyExpiredAuction(uint256 auctionId) {
+      require(auctions[auctionId].expiryDate < block.timestamp, "Transaction only valid for expired Auctions");
+        _;
+  }
+
   modifier noBids(uint256 auctionId) {
       require(auctions[auctionId].highestBidder == address(0), "Auction has bids already");
         _;
@@ -109,6 +122,7 @@ contract Market is Ownable, ReentrancyGuard {
   // AUCTION MANAGEMENT
   // Create Auction
   function createAuction(address _contractAddress, uint256 _tokenId, uint256 _startingPrice, uint256 expiryDate) public nonReentrant returns(uint256 auctionId){
+      require(expiryDate.sub(minimumAuctionLiveness) > block.timestamp, "Expiry date is not far enough in the future");
 
       // Transfer NFT to market contract
       IERC721(_contractAddress).transferFrom(msg.sender, address(this), _tokenId);
@@ -162,7 +176,7 @@ contract Market is Ownable, ReentrancyGuard {
   }
 
 
-  function placeBid(uint256 auctionId, uint256 bidPrice) public payable openAuction(auctionId) nonReentrant{
+  function placeBid(uint256 auctionId, uint256 bidPrice) public payable openAuction(auctionId) nonExpiredAuction(auctionId) nonReentrant{
       require(msg.value == bidPrice.add(calculateCommission(bidPrice)), "Transaction value has to equal price + commission");
       Auction storage auction = auctions[auctionId];
       require(bidPrice >= auction.currentPrice.add(minimumBidSize), "Bid has to exceed current price by the minimumBidSize or more");
