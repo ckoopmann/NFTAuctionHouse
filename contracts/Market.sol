@@ -21,6 +21,12 @@ contract Market is Ownable, ReentrancyGuard {
   uint256 public commissionPercentage;
   // Lower bound of total Commission charged per sale
   uint256 public minimumCommission;
+  // Minimum amount by which a new bid has to exceed previousBid
+  uint256 public minimumBidSize;
+
+  // Save Users refund balances (to be used when they are outbid)
+  mapping(address => uint256) userRefunds;
+  
 
 
   using Counters for Counters.Counter;
@@ -43,9 +49,10 @@ contract Market is Ownable, ReentrancyGuard {
 
   mapping(uint256 => Auction) public auctions;
 
-  constructor(uint256 _commissionPercentage, uint256 _minimumCommission) {
+  constructor(uint256 _commissionPercentage, uint256 _minimumCommission, uint256 _minimumBidSize) {
       commissionPercentage = _commissionPercentage;
       minimumCommission = _minimumCommission;
+      minimumBidSize = _minimumBidSize;
   }
 
   // EVENTS
@@ -60,6 +67,18 @@ contract Market is Ownable, ReentrancyGuard {
   event AuctionCanceled(
       uint256 auctionId
   );
+
+  event BidPlaced(
+      uint256 auctionId,
+      uint256 bidPrice
+  );
+
+ event UserRefunded(
+     address refundAddress,
+     uint256 amount
+ );
+
+
 
 
   // MODIFIERS
@@ -84,6 +103,8 @@ contract Market is Ownable, ReentrancyGuard {
       commission = commission.max(minimumCommission);
   }
 
+
+  // AUCTION MANAGEMENT
   // Create Auction
   function createAuction(address _contractAddress, uint256 _tokenId, uint256 _startingPrice) public nonReentrant returns(uint256 auctionId){
 
@@ -123,4 +144,36 @@ contract Market is Ownable, ReentrancyGuard {
       emit AuctionCanceled(auctionId);
   }
 
+  // BIDDING
+  function refundUser(address refundAddress, uint256 amount) private {
+      userRefunds[refundAddress] = userRefunds[refundAddress].add(amount);
+      emit UserRefunded(refundAddress, amount);
+  }
+
+  function withdrawRefund() public nonReentrant{
+      uint256 refundBalance = userRefunds[msg.sender];
+      require(refundBalance > 0, "User has no refunds to withdraw");
+      userRefunds[msg.sender] = 0;
+
+      (bool success, ) = msg.sender.call{value: refundBalance}("");
+      require(success);
+  }
+
+
+  function placeBid(uint256 auctionId, uint256 bidPrice) public payable openAuction(auctionId) nonReentrant{
+      require(msg.value == bidPrice.add(calculateCommission(bidPrice)), "Transaction value has to equal price + commission");
+      Auction storage auction = auctions[auctionId];
+      require(bidPrice >= auction.currentPrice.add(minimumBidSize), "Bid has to exceed current price by the minimumBidSize or more");
+    
+      // If this is not the first bid, refund the previous highest bidder
+      address previousBidder = auction.highestBidder;
+      if(previousBidder != address(0)){
+        uint256 refundAmount = auction.currentPrice.add(calculateCommission(auction.currentPrice));
+        refundUser(previousBidder, refundAmount);
+      }
+
+      auction.highestBidder = msg.sender;
+      auction.currentPrice = bidPrice;
+      emit BidPlaced(auctionId, bidPrice);
+  }
 }

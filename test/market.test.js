@@ -4,6 +4,7 @@ describe("Market", function () {
   let utils;
   let commissionPercentage;
   let minimumCommission;
+  let minimumBidSize;
   let market;
   let owner;
 
@@ -14,8 +15,9 @@ describe("Market", function () {
 
     commissionPercentage = utils.parseUnits("0.01");
     minimumCommission = utils.parseUnits("0.001");
+    minimumBidSize = utils.parseUnits("0.0001");
 
-    market = await Market.deploy(commissionPercentage, minimumCommission);
+    market = await Market.deploy(commissionPercentage, minimumCommission, minimumBidSize);
     await market.deployed();
   });
 
