@@ -204,11 +204,13 @@ contract Market is Ownable, ReentrancyGuard {
       
       bool sold = auction.highestBidder != address(0);
       if(sold){
+        // If token was sold transfer it to its new owner and credit seller / contractOwner with price / commission
         IERC721(auction.contractAddress).transferFrom(address(this), auction.highestBidder, auction.tokenId);
         creditUser(auction.seller, auction.currentPrice);
         creditUser(owner(), calculateCommission(auction.currentPrice));
       }
       else{
+        // If token was not sold, return ownership to the seller
         IERC721(auction.contractAddress).transferFrom(address(this), auction.seller, auction.tokenId);
       }
       
@@ -242,7 +244,7 @@ contract Market is Ownable, ReentrancyGuard {
 
 
   /**
-   * @dev Places a bid on the selected auction for the selected price
+   * @dev Places a bid on the selected auction at the selected price
    * Requires the provided bid price to exceed the current highest bid by at least the minimumBidSize.
    * Also requires the caller to transfer the exact amount of the chosen bidPrice plus commission, to be held in escrow by the contract
    * until the auction is settled or a higher bid is placed.
