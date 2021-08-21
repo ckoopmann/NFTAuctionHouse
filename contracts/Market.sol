@@ -48,6 +48,7 @@ contract Market is Ownable, ReentrancyGuard {
       address highestBidder;
       AuctionStatus status;
       uint256 expiryDate;
+      uint256 auctionId;
   }
 
   mapping(uint256 => Auction) public auctions;
@@ -137,7 +138,7 @@ contract Market is Ownable, ReentrancyGuard {
       auctionId = totalAuctionCount.current();
 
       // Register new Auction
-      auctions[auctionId] = Auction(_contractAddress, _tokenId, _startingPrice, msg.sender, address(0), AuctionStatus.OPEN, expiryDate);
+      auctions[auctionId] = Auction(_contractAddress, _tokenId, _startingPrice, msg.sender, address(0), AuctionStatus.OPEN, expiryDate, auctionId);
       emit AuctionCreated(auctionId, _contractAddress, _tokenId, _startingPrice, msg.sender, expiryDate);
   }
 
