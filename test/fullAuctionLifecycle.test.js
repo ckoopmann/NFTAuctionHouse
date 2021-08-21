@@ -119,7 +119,7 @@ describe("Test a success full auction lifecycle", function () {
       });
     }
 
-    it("Auction is settled correctly", async function () {
+    it("Auction can be settled", async function () {
       const tokenOwnerBefore = await testERC721Contract.ownerOf(tokenId);
       expect(tokenOwnerBefore).to.equal(market.address);
 
@@ -129,11 +129,15 @@ describe("Test a success full auction lifecycle", function () {
       ]);
       await ethers.provider.send("evm_mine", []);
       market.settleAuction(auctionId);
+    })
 
+    it("NFT is transferred to highest bidder", async function () {
       // Check that NFT Token is transfered to highest bidder
       const tokenOwnerAfter = await testERC721Contract.ownerOf(tokenId);
       expect(tokenOwnerAfter).to.equal(highestBidder.address);
+    })
 
+    it("Seller is credited with sale price", async function () {
       // Check that seller can withdraw the sale price
       const sellerBalanceBefore = await seller.getBalance();
       // Trigger credit transaction and determine paid transaction fee
@@ -143,7 +147,9 @@ describe("Test a success full auction lifecycle", function () {
       // Get balance after credit and check that seller got the final price minus transaction fee
       const sellerBalanceAfter = await seller.getBalance();
       expect(sellerBalanceAfter.sub(sellerBalanceBefore)).to.equal(currentPrice.sub(creditSellerTxFee));
+    })
 
+    it("Contract Owner is credited with commission", async function () {
       // Check that contract owner can withdraw the comission
       const contractOwnerBalanceBefore = await contractOwner.getBalance();
       const commission = await market.calculateCommission(currentPrice)

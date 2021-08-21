@@ -56,8 +56,51 @@ async function getBlocktime(provider) {
   return currentBlockTime;
 }
 
+async function deployMarketplaceContract(ethers) {
+  const Market = await ethers.getContractFactory("Market");
+  // Constructor parameters
+  commissionPercentage = ethers.utils.parseUnits("0.01");
+  minimumCommission = ethers.utils.parseUnits("0.001");
+  minimumBidSize = ethers.utils.parseUnits("0.0001");
+  minimumAuctionLiveness = 10 * 60;
+
+  market = await Market.deploy(
+    commissionPercentage,
+    minimumCommission,
+    minimumBidSize,
+    minimumAuctionLiveness
+  );
+  await market.deployed();
+  return [
+    market,
+    {
+      commissionPercentage,
+      minimumCommission,
+      minimumBidSize,
+      minimumAuctionLiveness,
+    },
+  ];
+}
+
+async function deployERC721Contract(ethers) {
+  const TestERC721 = await ethers.getContractFactory("TestERC721");
+  utils = ethers.utils;
+
+  const baseURI = "BASEURI"
+  const tokenName = "TestERC721";
+  const symbol = "T721";
+
+  // Deploy ERC721 contract
+  testERC721Contract = await TestERC721.deploy(tokenName, symbol, baseURI);
+  await testERC721Contract.deployed();
+
+  return [testERC721Contract, { tokenName, symbol, baseURI }];
+}
+
 module.exports = {
   mintTestToken,
   createAuction,
   getBlocktime,
+  deployMarketplaceContract,
+  deployERC721Contract,
 };
