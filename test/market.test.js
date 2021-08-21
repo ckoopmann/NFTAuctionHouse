@@ -278,15 +278,25 @@ describe("Market", function () {
 
       // Check that seller can withdraw the sale price
       const sellerBalanceBefore = await seller.getBalance();
-
-      // Trigger refund transaction and determine paid transaction fee
-      const refundTx = await market.connect(seller).withdrawRefund();
-      const refundTxReceipt = await refundTx.wait();
-      const refundTxFee = refundTxReceipt.gasUsed.mul(refundTx.gasPrice)
-
-      // Get balance after refund and check that seller got the final price minus transaction fee
+      // Trigger credit transaction and determine paid transaction fee
+      const creditSellerTx = await market.connect(seller).withdrawCredit();
+      const creditSellerTxReceipt = await creditSellerTx.wait();
+      const creditSellerTxFee = creditSellerTxReceipt.gasUsed.mul(creditSellerTx.gasPrice)
+      // Get balance after credit and check that seller got the final price minus transaction fee
       const sellerBalanceAfter = await seller.getBalance();
-      expect(sellerBalanceAfter.sub(sellerBalanceBefore)).to.equal(currentPrice.sub(refundTxFee));
+      expect(sellerBalanceAfter.sub(sellerBalanceBefore)).to.equal(currentPrice.sub(creditSellerTxFee));
+
+      // Check that contract owner can withdraw the comission
+      const contractOwnerBalanceBefore = await contractOwner.getBalance();
+      const commission = await market.calculateCommission(currentPrice)
+      // Trigger credit transaction and determine paid transaction fee
+      const creditOwnerTx = await market.connect(contractOwner).withdrawCredit();
+      const creditOwnerTxReceipt = await creditOwnerTx.wait();
+      const creditOwnerTxFee = creditOwnerTxReceipt.gasUsed.mul(creditOwnerTx.gasPrice)
+      // Get balance after credit and check that contractOwner got the commission minus transaction fee
+      const contractOwnerBalanceAfter = await contractOwner.getBalance();
+      expect(contractOwnerBalanceAfter.sub(contractOwnerBalanceBefore)).to.equal(commission.sub(creditOwnerTxFee));
+
 
     });
   });

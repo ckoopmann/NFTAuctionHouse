@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: Unlicense
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
@@ -10,6 +10,23 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 
+/**
+ * @title NFT Auction Market
+ * @dev NFT Marketplace for creating auctions on ERC-721 tokens
+ * 
+ * This contract implements a marketplace where sellers can put their NFTs
+ * up for auction and would-be buyers can place bids on those NFTs.
+ * Sellers can choose a minimum / starting bid, an expiry time when the auction ends
+ * as well as the contract address and id of the token to sell.
+ * Before creating an auction the seller has to approve this contract for the respective token,
+ * which will be held in escrow until the auction ends.
+ * When placing a bid the buyer has to transfer the amount he wants to bid plus commission to the 
+ * contract, which he will be refunded in case he gets outbid.
+ * After the specified expiry date of an auction anyone can trigger the settlement 
+ * which will transfer the token to its new owner as well as credit the seller with the 
+ * sale price.
+ * All comissions will be credited to the owner / deployer of the marketplace contract.
+ */
 contract Market is Ownable, ReentrancyGuard {
 
   // Protect against overflow
@@ -26,8 +43,8 @@ contract Market is Ownable, ReentrancyGuard {
   // Minimum duration in seconds for which the auction has to be live
   uint256 public minimumAuctionLiveness;
 
-  // Save Users refund balances (to be used when they are outbid)
-  mapping(address => uint256) userRefunds;
+  // Save Users credit balances (to be used when they are outbid)
+  mapping(address => uint256) userCredits;
   
 
 
@@ -84,8 +101,8 @@ contract Market is Ownable, ReentrancyGuard {
       uint256 bidPrice
   );
 
- event UserRefunded(
-     address refundAddress,
+ event UserCredited(
+     address creditAddress,
      uint256 amount
  );
 
@@ -126,7 +143,10 @@ contract Market is Ownable, ReentrancyGuard {
 
 
   // AUCTION MANAGEMENT
-  // Create Auction
+  /**
+   * @dev Creates a new auction and transfers the token to the contract to be held in escrow until the end of the auction.
+   * Requires this contract to be approved for the token to be auctioned.
+   */
   function createAuction(address _contractAddress, uint256 _tokenId, uint256 _startingPrice, uint256 expiryDate) public nonReentrant returns(uint256 auctionId){
       require(expiryDate.sub(minimumAuctionLiveness) > block.timestamp, "Expiry date is not far enough in the future");
 
@@ -142,7 +162,9 @@ contract Market is Ownable, ReentrancyGuard {
       emit AuctionCreated(auctionId, _contractAddress, _tokenId, _startingPrice, msg.sender, expiryDate);
   }
 
-  // Get all Open Auctions that have not yet been sold, expired or cancelled
+  /**
+   * @dev Returns all auctions that are still in "open" status
+   */
   function getOpenAuctions() public view returns(Auction[] memory){
       uint256 openAuctionsCount = totalAuctionCount.current().sub(closedAuctionCount.current());
       uint resultIndex = 0;
@@ -158,7 +180,10 @@ contract Market is Ownable, ReentrancyGuard {
       return openAuctions;
   }
 
-  // Cancel auction that has no bids on it yet
+  /**
+   * @dev Cancels an auction and returns the token to the original owner.
+   * Requires the caller to be the seller who created the auction, the auction to be open and no bids having been placed on it.
+   */
   function cancelAuction(uint256 auctionId) public openAuction(auctionId) noBids(auctionId) sellerOnly(auctionId) nonReentrant{
       auctions[auctionId].status = AuctionStatus.CANCELED;
       closedAuctionCount.increment();
@@ -166,7 +191,12 @@ contract Market is Ownable, ReentrancyGuard {
       emit AuctionCanceled(auctionId);
   }
 
-  // Settle Auction
+  /**
+   * @dev Settles an auction.
+   * If at least one bid has been placed the token will be transfered to its new owner, the seller will be credited the sale price
+   * and the contract owner will be credited the commission.
+   * If no bid has been placed on the token it will just be transfered back to its original owner.
+   */
   function settleAuction(uint256 auctionId) public openAuction(auctionId) onlyExpiredAuction(auctionId) nonReentrant{
       Auction storage auction = auctions[auctionId];
       auction.status = AuctionStatus.SETTLED;
@@ -175,7 +205,8 @@ contract Market is Ownable, ReentrancyGuard {
       bool sold = auction.highestBidder != address(0);
       if(sold){
         IERC721(auction.contractAddress).transferFrom(address(this), auction.highestBidder, auction.tokenId);
-        refundUser(auction.seller, auction.currentPrice);
+        creditUser(auction.seller, auction.currentPrice);
+        creditUser(owner(), calculateCommission(auction.currentPrice));
       }
       else{
         IERC721(auction.contractAddress).transferFrom(address(this), auction.seller, auction.tokenId);
@@ -185,32 +216,47 @@ contract Market is Ownable, ReentrancyGuard {
   }
 
 
-  // BIDDING
-  function refundUser(address refundAddress, uint256 amount) private {
-      userRefunds[refundAddress] = userRefunds[refundAddress].add(amount);
-      emit UserRefunded(refundAddress, amount);
+  /**
+   * @dev Credit user with given amount in ETH
+   * Credits a user with a given amount that he can later withdraw from the contract.
+   * Used to refund outbidden buyers and credit sellers / contract owner upon sucessfull sale.
+   */
+  function creditUser(address creditAddress, uint256 amount) private {
+      userCredits[creditAddress] = userCredits[creditAddress].add(amount);
+      emit UserCredited(creditAddress, amount);
   }
 
-  function withdrawRefund() public nonReentrant{
-      uint256 refundBalance = userRefunds[msg.sender];
-      require(refundBalance > 0, "User has no refunds to withdraw");
-      userRefunds[msg.sender] = 0;
+  /**
+   * @dev Withdraws all credit of the caller
+   * Transfers all of his credit to the caller and sets the balance to 0
+   * Fails if caller has no credit.
+   */
+  function withdrawCredit() public nonReentrant{
+      uint256 creditBalance = userCredits[msg.sender];
+      require(creditBalance > 0, "User has no credits to withdraw");
+      userCredits[msg.sender] = 0;
 
-      (bool success, ) = msg.sender.call{value: refundBalance}("");
+      (bool success, ) = msg.sender.call{value: creditBalance}("");
       require(success);
   }
 
 
+  /**
+   * @dev Places a bid on the selected auction for the selected price
+   * Requires the provided bid price to exceed the current highest bid by at least the minimumBidSize.
+   * Also requires the caller to transfer the exact amount of the chosen bidPrice plus commission, to be held in escrow by the contract
+   * until the auction is settled or a higher bid is placed.
+   */
   function placeBid(uint256 auctionId, uint256 bidPrice) public payable openAuction(auctionId) nonExpiredAuction(auctionId) nonReentrant{
       Auction storage auction = auctions[auctionId];
       require(bidPrice >= auction.currentPrice.add(minimumBidSize), "Bid has to exceed current price by the minimumBidSize or more");
       require(msg.value == bidPrice.add(calculateCommission(bidPrice)), "Transaction value has to equal price + commission");
     
-      // If this is not the first bid, refund the previous highest bidder
+      // If this is not the first bid, credit the previous highest bidder
       address previousBidder = auction.highestBidder;
       if(previousBidder != address(0)){
-        uint256 refundAmount = auction.currentPrice.add(calculateCommission(auction.currentPrice));
-        refundUser(previousBidder, refundAmount);
+        uint256 creditAmount = auction.currentPrice.add(calculateCommission(auction.currentPrice));
+        creditUser(previousBidder, creditAmount);
       }
     
       auction.highestBidder = msg.sender;
