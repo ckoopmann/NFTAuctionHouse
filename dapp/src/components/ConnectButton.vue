@@ -29,10 +29,17 @@ export default {
   methods: {
     ...mapActions(["setErrorType"]),
     ...mapActions("web3Module", ["connectWeb3", "clearProvider"]),
+    ...mapActions("contractModule", [
+      "initializeContract",
+      "registerListeners",
+      "loadAuctions",
+    ]),
     async connect() {
       this.loading = true;
       try {
         await this.connectWeb3();
+        await this.initializeContract();
+        await this.loadAuctions();
         await this.setErrorType(null);
       } finally {
         this.loading = false;
