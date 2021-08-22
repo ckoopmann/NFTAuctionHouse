@@ -7,7 +7,7 @@ const {
   deployTokenContract,
 } = require("./helpers.js");
 
-describe("Test a success full auction lifecycle", function () {
+describe("Test a successful auction lifecycle", function () {
   let utils;
   let market;
   let marketParams;
@@ -49,7 +49,6 @@ describe("Test a success full auction lifecycle", function () {
         [tokenContract] = await deployTokenContract(ethers, tokenTypeName);
 
         tokenId = await mintTestToken(tokenContract, seller, tokenTypeName);
-        startingPrice = utils.parseUnits("2");
 
         startingPrice = utils.parseUnits("2");
         startingBid = startingPrice.add(marketParams.minimumBidSize);
