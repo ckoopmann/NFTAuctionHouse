@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 // Dummy NFT-Contract for use in tests
-contract TestERC721 is ERC721URIStorage{
+contract TestERC721 is ERC721{
 
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
@@ -20,14 +20,13 @@ contract TestERC721 is ERC721URIStorage{
         return baseURI;
     }
 
-    function mintToken(string memory tokenURI)
+    function mintToken()
     public returns (uint256)
     {
         _tokenIds.increment();
 
         uint256 id = _tokenIds.current();
         _safeMint(msg.sender, id);
-        _setTokenURI(id, tokenURI);
 
         return id;
     }

@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import "./ERC1155Receiver.sol";
 
 
 /**
@@ -28,7 +29,7 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
  * sale price.
  * All comissions will be credited to the owner / deployer of the marketplace contract.
  */
-contract Market is Ownable, ReentrancyGuard {
+contract Market is Ownable, ReentrancyGuard, ERC1155Receiver {
 
   // Protect against overflow
   using SafeMath for uint256;
