@@ -40,7 +40,9 @@ async function createAuction(
   if (tokenType == 1) {
     await nftContract.connect(signer).approve(marketContract.address, tokenId);
   } else {
-    await nftContract.connect(signer).setApprovalForAll(marketContract.address, true);
+    await nftContract
+      .connect(signer)
+      .setApprovalForAll(marketContract.address, true);
   }
   // Create Auction
   await marketContract
@@ -104,8 +106,11 @@ async function deployMarketplaceContract(ethers) {
 async function deployTokenContract(ethers, tokenType = "ERC721") {
   if (tokenType == "ERC721") {
     return await deployERC721Contract(ethers);
-  } else {
+  }
+  if (tokenType == "ERC1155") {
     return await deployERC1155Contract(ethers);
+  } else {
+    throw "Invalid Tokentype";
   }
 }
 async function deployERC1155Contract(ethers) {
