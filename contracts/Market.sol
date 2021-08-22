@@ -278,6 +278,10 @@ contract Market is Ownable, ReentrancyGuard, ERC1155Receiver {
       emit BidPlaced(auctionId, bidPrice);
   }
 
+  /**
+   * @dev Transfer the token(s) belonging to a given auction.
+   * Supports both ERC721 and ERC1155 tokens
+   */
   function transferToken(uint256 auctionId, address from, address to) private {
       require(to != address(0), "Cannot transfer token to zero address");
 
@@ -293,7 +297,7 @@ contract Market is Ownable, ReentrancyGuard, ERC1155Receiver {
       }
       else if(tokenType == TokenType.ERC1155){
         uint256 quantity = auction.quantity;
-        require(quantity > 0, "Cannot create a ERC1155 auction with zero quantity");
+        require(quantity > 0, "Cannot transfer 0 quantity of ERC1155 tokens");
         IERC1155(contractAddress).safeTransferFrom(from, to, tokenId, quantity, "");
       }
       else{

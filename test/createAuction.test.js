@@ -107,6 +107,16 @@ describe("Create Auction", function () {
         expect(auction.contractAddress).to.equal(tokenContract.address);
         expect(auction.tokenType).to.equal(tokenType);
         expect(auction.quantity).to.equal(quantity);
+
+        // Check that token was transfered
+        if(tokenType ==1){
+          const tokenOwner = await tokenContract.ownerOf(tokenId);
+          expect(tokenOwner).to.equal(market.address);
+        }
+        else{
+          const tokenBalance = await tokenContract.balanceOf(market.address, tokenId);
+          expect(tokenBalance).to.equal(quantity);
+        }
       });
 
       it("Can retrieve full list of open auctions", async function () {
