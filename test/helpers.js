@@ -27,13 +27,22 @@ async function createAuction(
   tokenId,
   signer,
   startingPrice,
-  expiryDate
+  expiryDate,
+  tokenType = 1,
+  quantity = 1
 ) {
   await nftContract.connect(signer).approve(marketContract.address, tokenId);
   // Create Auction
   await marketContract
     .connect(signer)
-    .createAuction(nftContract.address, tokenId, startingPrice, expiryDate);
+    .createAuction(
+      nftContract.address,
+      tokenId,
+      startingPrice,
+      expiryDate,
+      tokenType,
+      quantity
+    );
   let auctionId;
 
   // Wait for AuctionCreated event and extract auctionId from it
@@ -86,7 +95,7 @@ async function deployERC721Contract(ethers) {
   const TestERC721 = await ethers.getContractFactory("TestERC721");
   utils = ethers.utils;
 
-  const baseURI = "BASEURI"
+  const baseURI = "BASEURI";
   const tokenName = "TestERC721";
   const symbol = "T721";
 

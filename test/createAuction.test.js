@@ -13,8 +13,11 @@ describe("Create Auction", function () {
   let startingPrice;
   let testERC721Contract;
   let auctionId;
+  let tokenId;
   let validExpiryDate;
   const tokenURI = "TESTTOKEN";
+  const tokenType = 1;
+  const quantity = 1;
 
   // Addresses / roles
   let seller;
@@ -40,9 +43,11 @@ describe("Create Auction", function () {
         .connect(seller)
         .createAuction(
           testERC721Contract.address,
-          1,
+          tokenId,
           startingPrice,
-          validExpiryDate
+          validExpiryDate,
+          tokenType,
+          quantity,
         )
     ).to.be.revertedWith("ERC721: transfer caller is not owner nor approved");
   });
@@ -55,9 +60,11 @@ describe("Create Auction", function () {
         .connect(seller)
         .createAuction(
           testERC721Contract.address,
-          1,
+          tokenId,
           startingPrice,
-          invalidExpiryDate
+          invalidExpiryDate,
+          tokenType,
+          quantity,
         )
     ).to.be.revertedWith("Expiry date is not far enough in the future");
   });
@@ -69,7 +76,9 @@ describe("Create Auction", function () {
       tokenId,
       seller,
       startingPrice,
-      validExpiryDate
+      validExpiryDate,
+      tokenType,
+      quantity,
     );
 
     // Check that data is saved correctly
