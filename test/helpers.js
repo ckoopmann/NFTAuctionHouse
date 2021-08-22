@@ -1,21 +1,26 @@
 const { expect } = require("chai");
 //Helper methods
 // Mints test nft and returns tokenId once minting transaction has completed
-async function mintTestToken(nftContract, tokenURI, signer) {
-  // Mint Token
-  await nftContract.connect(signer).mintToken(tokenURI);
-
+async function mintTestToken(nftContract, signer, tokenTypeName) {
   let tokenId;
+  let quantity = 1;
+  // Mint Token
+  if (tokenTypeName == "ERC721") {
+    await nftContract.connect(signer).mintToken();
 
-  // Wait for AuctionCreated event and extract auctionId from it
-  const transferPromise = new Promise((resolve) => {
-    nftContract.once(nftContract.filters.Transfer(), (from, to, _tokenId) => {
-      expect(to).to.equal(signer.address);
-      tokenId = _tokenId;
-      resolve();
+    // Wait for AuctionCreated event and extract auctionId from it
+    const transferPromise = new Promise((resolve) => {
+      nftContract.once(nftContract.filters.Transfer(), (from, to, _tokenId) => {
+        expect(to).to.equal(signer.address);
+        tokenId = _tokenId;
+        resolve();
+      });
     });
-  });
-  await transferPromise;
+    await transferPromise;
+  } else {
+    tokenId = 1;
+    await nftContract.connect(signer).mintToken(tokenId, quantity);
+  }
 
   return tokenId;
 }
@@ -27,13 +32,29 @@ async function createAuction(
   tokenId,
   signer,
   startingPrice,
-  expiryDate
+  expiryDate,
+  tokenType = 1,
+  quantity = 1
 ) {
-  await nftContract.connect(signer).approve(marketContract.address, tokenId);
+  // Aprove token
+  if (tokenType == 1) {
+    await nftContract.connect(signer).approve(marketContract.address, tokenId);
+  } else {
+    await nftContract
+      .connect(signer)
+      .setApprovalForAll(marketContract.address, true);
+  }
   // Create Auction
   await marketContract
     .connect(signer)
-    .createAuction(nftContract.address, tokenId, startingPrice, expiryDate);
+    .createAuction(
+      nftContract.address,
+      tokenId,
+      startingPrice,
+      expiryDate,
+      tokenType,
+      quantity
+    );
   let auctionId;
 
   // Wait for AuctionCreated event and extract auctionId from it
@@ -82,11 +103,34 @@ async function deployMarketplaceContract(ethers) {
   ];
 }
 
+async function deployTokenContract(ethers, tokenType = "ERC721") {
+  if (tokenType == "ERC721") {
+    return await deployERC721Contract(ethers);
+  }
+  if (tokenType == "ERC1155") {
+    return await deployERC1155Contract(ethers);
+  } else {
+    throw "Invalid Tokentype";
+  }
+}
+async function deployERC1155Contract(ethers) {
+  const TestERC1155 = await ethers.getContractFactory("TestERC1155");
+  utils = ethers.utils;
+
+  const baseURI = "https://example.domain/{id}.json";
+
+  // Deploy ERC1155 contract
+  testERC1155Contract = await TestERC1155.deploy(baseURI);
+  await testERC1155Contract.deployed();
+
+  return [testERC1155Contract, { baseURI }];
+}
+
 async function deployERC721Contract(ethers) {
   const TestERC721 = await ethers.getContractFactory("TestERC721");
   utils = ethers.utils;
 
-  const baseURI = "BASEURI"
+  const baseURI = "BASEURI";
   const tokenName = "TestERC721";
   const symbol = "T721";
 
@@ -103,4 +147,5 @@ module.exports = {
   getBlocktime,
   deployMarketplaceContract,
   deployERC721Contract,
+  deployTokenContract,
 };
