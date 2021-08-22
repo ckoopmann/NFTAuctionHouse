@@ -88,6 +88,8 @@ describe("Create Auction", function () {
     expect(auction.tokenId).to.equal(tokenId);
     expect(auction.currentPrice).to.equal(startingPrice);
     expect(auction.contractAddress).to.equal(testERC721Contract.address);
+    expect(auction.tokenType).to.equal(tokenType);
+    expect(auction.quantity).to.equal(quantity);
   });
 
   it("Can retrieve full list of open auctions", async function () {
