@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
 
 /**
@@ -66,6 +67,8 @@ contract Market is Ownable, ReentrancyGuard {
       AuctionStatus status;
       uint256 expiryDate;
       uint256 auctionId;
+      TokenType tokenType;
+      uint256 quantity;
   }
 
   mapping(uint256 => Auction) public auctions;
@@ -147,18 +150,26 @@ contract Market is Ownable, ReentrancyGuard {
    * @dev Creates a new auction and transfers the token to the contract to be held in escrow until the end of the auction.
    * Requires this contract to be approved for the token to be auctioned.
    */
-  function createAuction(address _contractAddress, uint256 _tokenId, uint256 _startingPrice, uint256 expiryDate) public nonReentrant returns(uint256 auctionId){
+  function createAuction(address _contractAddress, uint256 _tokenId, uint256 _startingPrice, uint256 expiryDate, TokenType tokenType, uint256 _quantity) public nonReentrant returns(uint256 auctionId){
       require(expiryDate.sub(minimumAuctionLiveness) > block.timestamp, "Expiry date is not far enough in the future");
+      require(tokenType != TokenType.NONE, "Invalid token type provided");
 
-      // Transfer NFT to market contract
-      IERC721(_contractAddress).transferFrom(msg.sender, address(this), _tokenId);
+      uint256 quantity = 1;
+      if(tokenType == TokenType.ERC1155){
+        quantity = _quantity;
+      }
 
       // Generate Auction Id
       totalAuctionCount.increment();
       auctionId = totalAuctionCount.current();
 
       // Register new Auction
-      auctions[auctionId] = Auction(_contractAddress, _tokenId, _startingPrice, msg.sender, address(0), AuctionStatus.OPEN, expiryDate, auctionId);
+      auctions[auctionId] = Auction(_contractAddress, _tokenId, _startingPrice, msg.sender, address(0), AuctionStatus.OPEN, expiryDate, auctionId, tokenType, quantity);
+
+      // Transfer Token
+      transferToken(auctionId, msg.sender, address(this));
+
+
       emit AuctionCreated(auctionId, _contractAddress, _tokenId, _startingPrice, msg.sender, expiryDate);
   }
 
@@ -187,7 +198,7 @@ contract Market is Ownable, ReentrancyGuard {
   function cancelAuction(uint256 auctionId) public openAuction(auctionId) noBids(auctionId) sellerOnly(auctionId) nonReentrant{
       auctions[auctionId].status = AuctionStatus.CANCELED;
       closedAuctionCount.increment();
-      IERC721(auctions[auctionId].contractAddress).transferFrom(address(this), msg.sender, auctions[auctionId].tokenId);
+      transferToken(auctionId, address(this), msg.sender);
       emit AuctionCanceled(auctionId);
   }
 
@@ -205,13 +216,13 @@ contract Market is Ownable, ReentrancyGuard {
       bool sold = auction.highestBidder != address(0);
       if(sold){
         // If token was sold transfer it to its new owner and credit seller / contractOwner with price / commission
-        IERC721(auction.contractAddress).transferFrom(address(this), auction.highestBidder, auction.tokenId);
+        transferToken(auctionId, address(this), auction.highestBidder);
         creditUser(auction.seller, auction.currentPrice);
         creditUser(owner(), calculateCommission(auction.currentPrice));
       }
       else{
         // If token was not sold, return ownership to the seller
-        IERC721(auction.contractAddress).transferFrom(address(this), auction.seller, auction.tokenId);
+        transferToken(auctionId, address(this), auction.seller);
       }
       
       emit AuctionSettled(auctionId, sold);
@@ -264,6 +275,29 @@ contract Market is Ownable, ReentrancyGuard {
       auction.highestBidder = msg.sender;
       auction.currentPrice = bidPrice;
       emit BidPlaced(auctionId, bidPrice);
+  }
+
+  function transferToken(uint256 auctionId, address from, address to) private {
+      require(to != address(0), "Cannot transfer token to zero address");
+
+      Auction storage auction = auctions[auctionId];
+      require(auction.status != AuctionStatus.NONE, "Cannot transfer token of non existent auction");
+
+      TokenType tokenType = auction.tokenType;
+      uint256 tokenId = auction.tokenId;
+      address contractAddress = auction.contractAddress;
+
+      if(tokenType == TokenType.ERC721){
+        IERC721(contractAddress).transferFrom(from, to, tokenId);
+      }
+      else if(tokenType == TokenType.ERC1155){
+        uint256 quantity = auction.quantity;
+        require(quantity > 0, "Cannot create a ERC1155 auction with zero quantity");
+        IERC1155(contractAddress).safeTransferFrom(from, to, tokenId, quantity, "");
+      }
+      else{
+        revert("Invalid token type for transfer");
+      }
   }
   
 }
