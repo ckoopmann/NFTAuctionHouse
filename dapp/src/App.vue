@@ -53,7 +53,7 @@
         </div>
       </v-navigation-drawer>
       <div>
-        <v-card v-if="errorType != null" class="mx-auto my-12" max-width="500">
+        <v-card v-if="false" class="mx-auto my-12" max-width="500">
           <v-card-text>{{ this.errorMessage }}</v-card-text></v-card
         >
         <router-view v-else />
