@@ -64,6 +64,12 @@ const contractModule = {
         }
       }
     },
+    async approveToken(context, payload){
+      console.log("Store approveToken: ", payload);
+    },
+    async createAuction(context, payload){
+      console.log("Store createAuction: ", payload);
+    },
     async registerListeners() {
       console.log("Registering contract listeners");
 

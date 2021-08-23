@@ -77,11 +77,12 @@ export default {
       clipped: true,
       drawer: false,
       constantItems: [
-        { icon: "mdi-magnify", title: "Search Item", to: "/dapp/search" },
+        { icon: "mdi-home", title: "About", to: "/" },
+        { icon: "mdi-magnify", title: "All Auctions", to: "/auctions" },
         {
           icon: "mdi-plus-box",
-          title: "Sell Item",
-          to: "/dapp/new",
+          title: "Create Auction",
+          to: "/new",
         },
       ],
     };
