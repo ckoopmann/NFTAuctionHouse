@@ -5,6 +5,7 @@
 // Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
 const fs = require("fs");
+const { mintTestToken } = require("../test/helpers");
 
 async function deployContract(contractName, constructorArgs) {
   const abiPath = `dapp/src/contracts/abis/${contractName}.json`;
@@ -34,6 +35,7 @@ async function deployContract(contractName, constructorArgs) {
     `${contractName} on network ${chainId} deployed to:`,
     contract.address
   );
+  return contract;
 }
 async function main() {
   // Hardhat always runs the compile task when running scripts with its command
@@ -49,13 +51,26 @@ async function main() {
   minimumCommission = ethers.utils.parseUnits("0.001");
   minimumBidSize = ethers.utils.parseUnits("0.0001");
   minimumAuctionLiveness = 10 * 60;
-  await deployContract("Market", [
+
+  const marketContract = await deployContract("Market", [
     commissionPercentage,
     minimumCommission,
     minimumBidSize,
     minimumAuctionLiveness,
   ]);
 
+  const baseURI = "BASEURI";
+  const tokenName = "TestERC721";
+  const symbol = "T721";
+  const testERC721Contract = await deployContract("TestERC721", [
+    tokenName,
+    symbol,
+    baseURI,
+  ]);
+
+  const [owner] = await ethers.getSigners();
+  await mintTestToken(testERC721Contract, owner, "ERC721");
+  console.log(`Minted ERC721 TestToken for ${owner.address}`)
 }
 
 // We recommend this pattern to be able to use async/await everywhere
