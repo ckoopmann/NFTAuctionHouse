@@ -125,7 +125,6 @@ export default {
           tokenId: this.tokenId,
           tokenContractAddress: this.tokenContractAddress,
           tokenType: this.tokenType,
-          quantity: this.quantity,
         });
         this.approved = true;
       } catch (e) {

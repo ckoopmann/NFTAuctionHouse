@@ -1,9 +1,11 @@
 import { getCurrentProvider } from "./web3.module";
 import { ethers } from "ethers";
 
-const contractName = "Market";
-const abi = require(`../../contracts/abis/${contractName}.json`);
-const addresses = require(`../../contracts/addresses/${contractName}.json`);
+const marketAbi = require(`../../contracts/abis/Market.json`);
+const marketAddresses = require(`../../contracts/addresses/Market.json`);
+
+const ERC721Abi = require(`../../contracts/abis/TestERC721.json`);
+const ERC1155Abi = require(`../../contracts/abis/TestERC1155.json`);
 
 let marketContract;
 const contractModule = {
@@ -37,16 +39,19 @@ const contractModule = {
       if (provider === undefined) {
         throw new Error("Provider is undefined - Cannot initialize contract");
       } else {
-        if (networkId in addresses) {
+        if (networkId in marketAddresses) {
           try {
             marketContract = new ethers.Contract(
-              addresses[networkId],
-              abi,
+              marketAddresses[networkId],
+              marketAbi,
               provider
             );
             // Will throw an error if contract is not deployed on current network
             await marketContract.deployed();
-            console.log("Connected to contract at: ", addresses[networkId]);
+            console.log(
+              "Connected to contract at: ",
+              marketAddresses[networkId]
+            );
             commit("setContractDeployed", true);
             dispatch("setErrorType", null, {
               root: true,
@@ -64,11 +69,58 @@ const contractModule = {
         }
       }
     },
-    async approveToken(context, payload){
-      console.log("Store approveToken: ", payload);
+
+    async approveToken({ rootGetters }, payload) {
+      const provider = getCurrentProvider();
+      const signer = rootGetters["web3Module/signer"];
+      console.log("Signer: ", signer);
+
+      const { tokenType, tokenId, tokenContractAddress } = payload;
+      if (tokenType == "ERC721") {
+        const nftContract = new ethers.Contract(
+          tokenContractAddress,
+          ERC721Abi,
+          provider
+        );
+        await nftContract
+          .connect(signer)
+          .approve(marketContract.address, tokenId);
+      }
+      if (tokenType == "ERC1155") {
+        const nftContract = new ethers.Contract(
+          tokenContractAddress,
+          ERC1155Abi,
+          provider
+        );
+        await nftContract
+          .connect(signer)
+          .setApprovalForAll(marketContract.address, true);
+      }
     },
-    async createAuction(context, payload){
-      console.log("Store createAuction: ", payload);
+    async createAuction({ rootGetters }, payload) {
+      const {
+        tokenContractAddress,
+        tokenId,
+        startingPrice,
+        expiryDate,
+        tokenType,
+        quantity,
+      } = payload;
+      const tokenTypeInts = {ERC721: 1, ERC1155: 2}
+      const processedExpiryDate = Math.floor(expiryDate.getTime() / 1000);
+      const signer = rootGetters["web3Module/signer"];
+      const processedStartingPrice = ethers.utils.parseUnits(startingPrice)
+      console.log("Signer: ", signer);
+      await marketContract
+        .connect(signer)
+        .createAuction(
+          tokenContractAddress,
+          tokenId,
+          processedStartingPrice,
+          processedExpiryDate,
+          tokenTypeInts[tokenType],
+          quantity
+        );
     },
     async registerListeners() {
       console.log("Registering contract listeners");

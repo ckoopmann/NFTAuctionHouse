@@ -67,10 +67,16 @@ async function main() {
     symbol,
     baseURI,
   ]);
-
   const [owner] = await ethers.getSigners();
   await mintTestToken(testERC721Contract, owner, "ERC721");
   console.log(`Minted ERC721 TestToken for ${owner.address}`)
+
+  const testERC1155Contract = await deployContract("TestERC1155", [
+    baseURI,
+  ]);
+  await mintTestToken(testERC1155Contract, owner, "ERC1155");
+  console.log(`Minted ERC1155 TestToken for ${owner.address}`)
+
 }
 
 // We recommend this pattern to be able to use async/await everywhere
