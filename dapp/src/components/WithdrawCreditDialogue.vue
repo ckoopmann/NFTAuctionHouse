@@ -12,10 +12,19 @@
         </v-card-title>
         <v-card-text>
           <v-container>
-            <v-list-item>
-              <v-list-item-title>Your Credit</v-list-item-title>
-              <v-list-item-subtitle>{{ userCredit }}</v-list-item-subtitle>
-            </v-list-item>
+            <v-row>
+              <v-col cols="8">
+                <v-list-item>
+                  <v-list-item-title>Your Credit</v-list-item-title>
+                  <v-list-item-subtitle>{{ userCredit }}</v-list-item-subtitle>
+                </v-list-item>
+              </v-col>
+              <v-col cols="4">
+                <v-btn color="blue darken-1" text @click="updateUserCredit">
+                  Refresh
+                </v-btn>
+              </v-col>
+            </v-row>
           </v-container>
         </v-card-text>
         <v-card-actions>
@@ -50,7 +59,7 @@ export default {
   },
   computed: mapGetters("contractModule", ["userCredit"]),
   methods: {
-    ...mapActions("contractModule", ["withdrawCredit"]),
+    ...mapActions("contractModule", ["withdrawCredit", "updateUserCredit"]),
     async submit() {
       try {
         this.loading = true;
