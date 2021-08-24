@@ -78,7 +78,7 @@ export default {
       drawer: false,
       constantItems: [
         { icon: "mdi-home", title: "About", to: "/" },
-        { icon: "mdi-magnify", title: "All Auctions", to: "/auctions" },
+        { icon: "mdi-magnify", title: "Open Auctions", to: "/openAuctions" },
         {
           icon: "mdi-plus-box",
           title: "Create Auction",

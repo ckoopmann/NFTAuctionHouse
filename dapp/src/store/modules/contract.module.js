@@ -181,8 +181,11 @@ const contractModule = {
     contractDeployed(state) {
       return state.contractDeployed;
     },
-    auctions(state) {
+    openAuctionMap(state) {
       return state.auctions;
+    },
+    openAuctionList(state) {
+      return Object.values(state.auctions);
     },
     currentTokenDetails(state) {
       return state.currentTokenDetails;
