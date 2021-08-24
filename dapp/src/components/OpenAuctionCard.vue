@@ -35,6 +35,7 @@
         <v-spacer></v-spacer>
 
         <v-btn
+          v-if="auctionCanBeCanceled"
           color="blue darken-1"
           type="button"
           @click.prevent="cancelAuctionButton"
@@ -74,6 +75,13 @@ export default {
   },
   computed: {
     ...mapGetters("web3Module", ["selectedAccount"]),
+    auctionCanBeCanceled() {
+      const userIsSeller =
+        ethers.utils.getAddress(this.seller) ==
+        ethers.utils.getAddress(this.selectedAccount);
+      const noBidsYet = this.highestBidder == ethers.constants.AddressZero;
+      return userIsSeller && noBidsYet;
+    },
     tokenTypeString() {
       const tokenTypeMapping = {
         1: "ERC721",
