@@ -10,6 +10,7 @@
           </v-avatar>
         </router-link>
         <v-spacer />
+        <WithdrawCreditDialogue v-if="isConnected" />
         <div v-if="isConnected" :title="selectedAccount" class="connected">
           Connected: {{ selectedAccount }}
         </div>
@@ -66,10 +67,11 @@
 import { mapGetters } from "vuex";
 
 import ConnectButton from "./components/ConnectButton.vue";
+import WithdrawCreditDialogue from "./components/WithdrawCreditDialogue.vue";
 
 export default {
   name: "ParetoMarket",
-  components: { ConnectButton },
+  components: { ConnectButton, WithdrawCreditDialogue },
 
   data() {
     return {

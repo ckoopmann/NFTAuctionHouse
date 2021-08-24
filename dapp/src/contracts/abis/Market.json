@@ -25,5 +25,6 @@
   "function settleAuction(uint256 auctionId)",
   "function supportsInterface(bytes4 interfaceId) view returns (bool)",
   "function transferOwnership(address newOwner)",
+  "function userCredits(address) view returns (uint256)",
   "function withdrawCredit()"
 ]

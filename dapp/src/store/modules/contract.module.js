@@ -16,6 +16,7 @@ const contractModule = {
     auctions: {},
     currentTokenDetails: null,
     currentTokenId: null,
+    userCredit: 0,
   },
   mutations: {
     setContractDeployed(state, contractDeployed) {
@@ -29,6 +30,9 @@ const contractModule = {
     },
     resetAuctions(state, auctions) {
       state.auctions = auctions;
+    },
+    setUserCredit(state, userCredit) {
+      state.userCredit = userCredit;
     },
   },
   actions: {
@@ -53,6 +57,7 @@ const contractModule = {
               marketAddresses[networkId]
             );
             commit("setContractDeployed", true);
+            dispatch("updateUserCredit");
             dispatch("setErrorType", null, {
               root: true,
             });
@@ -99,6 +104,11 @@ const contractModule = {
       }
       await approveTokenTx.wait();
     },
+    async updateUserCredit({ rootGetters, commit }) {
+      const account = rootGetters["web3Module/selectedAccount"];
+      const userCredit = await marketContract.userCredits(account);
+      commit("setUserCredit", parseFloat(ethers.utils.formatEther(userCredit)));
+    },
     async settleAuction({ rootGetters }, { auctionId }) {
       const signer = rootGetters["web3Module/signer"];
       const settleAuctionTx = await marketContract
@@ -113,13 +123,24 @@ const contractModule = {
         .cancelAuction(auctionId);
       await cancelAuctionTx.wait();
     },
+    async withdrawCredit({ rootGetters }) {
+      const signer = rootGetters["web3Module/signer"];
+      const withdrawCreditTx = await marketContract
+        .connect(signer)
+        .withdrawCredit();
+      await withdrawCreditTx.wait();
+    },
     async placeBid({ rootGetters }, { auctionId, bidPrice }) {
       const signer = rootGetters["web3Module/signer"];
-      const bidPriceProcessed = ethers.utils.parseUnits(bidPrice)
-      const commission = await marketContract.callStatic.calculateCommission(bidPriceProcessed)
+      const bidPriceProcessed = ethers.utils.parseUnits(bidPrice);
+      const commission = await marketContract.callStatic.calculateCommission(
+        bidPriceProcessed
+      );
       const placeBidTx = await marketContract
         .connect(signer)
-        .placeBid(auctionId, bidPriceProcessed, {value: bidPriceProcessed.add(commission)});
+        .placeBid(auctionId, bidPriceProcessed, {
+          value: bidPriceProcessed.add(commission),
+        });
       await placeBidTx.wait();
     },
     async createAuction({ rootGetters }, payload) {
@@ -147,31 +168,6 @@ const contractModule = {
           quantity
         );
       await createAuctionTx.wait();
-    },
-    async registerListeners() {
-      console.log("Registering contract listeners");
-
-      // marketContract.on("Transfer", async (from, to, id) => {
-      //   console.log("Detected transfer event", from, to, id);
-      //   const activeAccount = rootGetters["web3Module/selectedAccount"];
-      //   if (
-      //     ethers.utils.getAddress(to) === ethers.utils.getAddress(activeAccount)
-      //   ) {
-      //     const [
-      //       assetIdentifier,
-      //       pictureURI,
-      //       numDocuments,
-      //     ] = await marketContract.callStatic.getAssetData(id);
-      //     commit("setAuction", {
-      //       id,
-      //       data: {
-      //         assetIdentifier,
-      //         pictureURI,
-      //         numDocuments: numDocuments.toNumber(),
-      //       },
-      //     });
-      //   }
-      // });
     },
 
     async loadAuctions({ commit }) {
@@ -215,6 +211,9 @@ const contractModule = {
     },
     currentTokenDetails(state) {
       return state.currentTokenDetails;
+    },
+    userCredit(state) {
+      return state.userCredit;
     },
   },
 };

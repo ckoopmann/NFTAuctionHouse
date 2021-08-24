@@ -49,7 +49,7 @@ export default {
   name: "PlaceBid",
   props: {
     auctionId: {
-      type: String,
+      type: Number,
       required: true,
     },
   },
