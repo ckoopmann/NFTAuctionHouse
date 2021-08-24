@@ -106,10 +106,10 @@ const contractModule = {
         tokenType,
         quantity,
       } = payload;
-      const tokenTypeInts = {ERC721: 1, ERC1155: 2}
+      const tokenTypeInts = { ERC721: 1, ERC1155: 2 };
       const processedExpiryDate = Math.floor(expiryDate.getTime() / 1000);
       const signer = rootGetters["web3Module/signer"];
-      const processedStartingPrice = ethers.utils.parseUnits(startingPrice)
+      const processedStartingPrice = ethers.utils.parseUnits(startingPrice);
       console.log("Signer: ", signer);
       await marketContract
         .connect(signer)
@@ -151,7 +151,21 @@ const contractModule = {
     async loadAuctions({ commit }) {
       const auctionArray = await marketContract.getOpenAuctions();
       const auctionObject = auctionArray.reduce(
-        (obj, cur) => ({ ...obj, [cur.auctionId]: cur }),
+        (obj, cur) => ({
+          ...obj,
+          [cur.auctionId]: {
+            contractAddress: cur[0],
+            tokenId: cur[1].toNumber(),
+            currentPrice: parseFloat(ethers.utils.formatEther(cur[2])),
+            seller: cur[3],
+            highestBidder: cur[4],
+            status: cur[5],
+            expiryDate: new Date(cur[6].toNumber() * 1000),
+            auctionId: cur[7].toNumber(),
+            tokenType: cur[8],
+            quantity: cur[9].toNumber(),
+          },
+        }),
         {}
       );
       commit("resetAuctions", auctionObject);
