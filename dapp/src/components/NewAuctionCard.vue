@@ -35,30 +35,43 @@
               ></v-text-field>
             </v-col>
           </v-row>
-          <v-row v-if="approved">
-            <v-col cols="12">
-              <v-text-field
-                v-model="startingPrice"
-                label="Starting Price"
-                required
-              ></v-text-field>
-            </v-col>
-          </v-row>
-          <v-row v-if="approved">
-            <v-col cols="12">
-              <v-datetime-picker
-                v-model="expiryDate"
-                label="Expiry Date"
-                required
-                ><template slot="dateIcon">
-                  <v-icon>mdi-calendar</v-icon>
-                </template>
-                <template slot="timeIcon">
-                  <v-icon>mdi-clock</v-icon>
-                </template></v-datetime-picker
-              >
-            </v-col>
-          </v-row>
+          <div v-if="approved">
+            <v-row>
+              <v-col cols="12">
+                <v-text-field
+                  v-model="quantity"
+                  label="Quantity"
+                  type="number"
+                  required
+                ></v-text-field>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="12">
+                <v-text-field
+                  v-model="startingPrice"
+                  label="Starting Price"
+                  type="number"
+                  required
+                ></v-text-field>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="12">
+                <v-datetime-picker
+                  v-model="expiryDate"
+                  label="Expiry Date"
+                  required
+                  ><template slot="dateIcon">
+                    <v-icon>mdi-calendar</v-icon>
+                  </template>
+                  <template slot="timeIcon">
+                    <v-icon>mdi-clock</v-icon>
+                  </template></v-datetime-picker
+                >
+              </v-col>
+            </v-row>
+          </div>
         </v-container>
       </v-card-text>
       <v-card-actions>
@@ -109,7 +122,7 @@ export default {
       tokenType: "ERC721",
       supportedTokenTypes: ["ERC721", "ERC1155"],
       startingPrice: 0,
-      expiryDate: new Date(),
+      expiryDate: new Date(Date.now() + 60 * 60 * 1000),
     };
   },
   methods: {
