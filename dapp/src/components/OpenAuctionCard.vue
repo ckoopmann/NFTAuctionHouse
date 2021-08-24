@@ -30,6 +30,12 @@
         <v-list-item-title>Seller </v-list-item-title>
         <v-list-item-subtitle>{{ sellerParsed }}</v-list-item-subtitle>
       </v-list-item>
+      <v-list-item>
+        <v-list-item-title>Expiration Date</v-list-item-title>
+        <v-list-item-subtitle>{{
+          expiryDate.toLocaleString("en-GB")
+        }}</v-list-item-subtitle>
+      </v-list-item>
 
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -47,6 +53,20 @@
             <span>Loading...</span>
           </template>
         </v-btn>
+        <v-btn
+          v-if="auctionCanBeSettled"
+          color="blue darken-1"
+          type="button"
+          @click.prevent="settleAuctionButton"
+          :loading="loading"
+          :disabled="loading"
+        >
+          Settle Auction
+          <template #loader>
+            <span>Loading...</span>
+          </template>
+        </v-btn>
+        <PlaceBidDialogue v-if="canBid" :auctionId="auctionId" />
       </v-card-actions>
     </v-card-text>
   </v-card>
@@ -55,7 +75,9 @@
 <script>
 import { mapGetters, mapActions } from "vuex";
 import { ethers } from "ethers";
+import PlaceBidDialogue from "./PlaceBidDialogue.vue";
 export default {
+  components: { PlaceBidDialogue },
   props: [
     "auctionId",
     "contractAddress",
@@ -74,7 +96,13 @@ export default {
     };
   },
   computed: {
-    ...mapGetters("web3Module", ["selectedAccount"]),
+    ...mapGetters("web3Module", ["selectedAccount", "blockTime"]),
+    canBid() {
+      return this.blockTime < this.expiryDate;
+    },
+    auctionCanBeSettled() {
+      return this.blockTime > this.expiryDate;
+    },
     auctionCanBeCanceled() {
       const userIsSeller =
         ethers.utils.getAddress(this.seller) ==
@@ -112,7 +140,25 @@ export default {
     },
   },
   methods: {
-    ...mapActions("contractModule", ["cancelAuction", "loadAuctions"]),
+    ...mapActions("contractModule", [
+      "cancelAuction",
+      "settleAuction",
+      "loadAuctions",
+    ]),
+    async settleAuctionButton() {
+      try {
+        this.loading = true;
+        console.log(`settleing Auction ${this.auctionId}`);
+        await this.settleAuction({
+          auctionId: this.auctionId,
+        });
+        await this.loadAuctions();
+      } catch (e) {
+        console.error("Settleing auction failed with: ", e);
+      } finally {
+        this.loading = false;
+      }
+    },
     async cancelAuctionButton() {
       try {
         this.loading = true;

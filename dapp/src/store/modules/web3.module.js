@@ -28,6 +28,7 @@ const web3Module = {
     correctNetwork: "kovan",
     activeNetwork: "",
     selectedAccount: "",
+    blockTimestamp: 0,
   },
   mutations: {
     setNetworkInfo(state, networkInfo) {
@@ -63,6 +64,9 @@ const web3Module = {
       state.providerSet = false;
       state.isConnected = false;
     },
+    setBlockTimestamp(state, timestamp) {
+      state.blockTimestamp = timestamp;
+    },
   },
   actions: {
     clearProvider(context) {
@@ -85,6 +89,14 @@ const web3Module = {
           window.location.reload();
         });
       }
+      const ethersProvider = new ethers.providers.Web3Provider(
+        metamaskProvider
+      );
+      ethersProvider.on("block", async (blockNumber) => {
+        const block = await ethersProvider.getBlock(blockNumber);
+        console.log("Block timestamp:", block.timestamp);
+        context.commit("setBlockTimestamp", block.timestamp);
+      });
     },
     async connectWeb3(context) {
       context.commit("setModalInitializing", true);
@@ -99,7 +111,9 @@ const web3Module = {
       } catch (e) {
         console.log("Error connecting to Web3");
         context.commit("setConnectionStatus", false);
-        context.dispatch("setErrorType", "failedWalletConnection", { root: true });
+        context.dispatch("setErrorType", "failedWalletConnection", {
+          root: true,
+        });
       } finally {
         context.commit("setModalInitializing", false);
       }
@@ -133,6 +147,9 @@ const web3Module = {
     },
     isConnected(state) {
       return state.isConnected;
+    },
+    blockTime(state) {
+      return new Date(state.blockTimestamp*1000);
     },
   },
 };

@@ -99,12 +99,28 @@ const contractModule = {
       }
       await approveTokenTx.wait();
     },
+    async settleAuction({ rootGetters }, { auctionId }) {
+      const signer = rootGetters["web3Module/signer"];
+      const settleAuctionTx = await marketContract
+        .connect(signer)
+        .settleAuction(auctionId);
+      await settleAuctionTx.wait();
+    },
     async cancelAuction({ rootGetters }, { auctionId }) {
       const signer = rootGetters["web3Module/signer"];
       const cancelAuctionTx = await marketContract
         .connect(signer)
         .cancelAuction(auctionId);
       await cancelAuctionTx.wait();
+    },
+    async placeBid({ rootGetters }, { auctionId, bidPrice }) {
+      const signer = rootGetters["web3Module/signer"];
+      const bidPriceProcessed = ethers.utils.parseUnits(bidPrice)
+      const commission = await marketContract.callStatic.calculateCommission(bidPriceProcessed)
+      const placeBidTx = await marketContract
+        .connect(signer)
+        .placeBid(auctionId, bidPriceProcessed, {value: bidPriceProcessed.add(commission)});
+      await placeBidTx.wait();
     },
     async createAuction({ rootGetters }, payload) {
       const {
