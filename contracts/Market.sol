@@ -46,7 +46,7 @@ contract Market is Ownable, ReentrancyGuard, ERC1155Receiver {
   uint256 public minimumAuctionLiveness;
 
   // Save Users credit balances (to be used when they are outbid)
-  mapping(address => uint256) userCredits;
+  mapping(address => uint256) public userCredits;
   
 
 

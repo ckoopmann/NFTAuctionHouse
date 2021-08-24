@@ -12,6 +12,7 @@
     "vue": "^2.6.11",
     "vue-router": "^3.2.0",
     "vuetify": "^2.4.0",
+    "vuetify-datetime-picker": "^2.1.1",
     "vuex": "^3.4.0",
     "web3modal": "^1.9.4"
   },

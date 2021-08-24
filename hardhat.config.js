@@ -10,6 +10,18 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
+task("time", "Set time to given date")
+  .addParam(
+    "timestamp",
+    "Timestamp that the blocktime should be set to"
+  )
+  .setAction(async ({ timestamp }, { ethers }) => {
+      console.log("Traveling to timestamp: ", timestamp)
+      const timeStamp = new Date(timestamp).getTime() / 1000
+      await ethers.provider.send("evm_setNextBlockTimestamp", [timeStamp + 1])
+      await ethers.provider.send("evm_mine", [])
+  })
+
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 

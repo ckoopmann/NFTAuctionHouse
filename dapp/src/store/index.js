@@ -1,6 +1,7 @@
 import Vue from "vue";
 import Vuex from "vuex";
 import web3Module from "./modules/web3.module";
+import contractModule from "./modules/contract.module";
 
 const errorMessages = {
   noWalletConnection: "Please connect your Metamask wallet to use the app",
@@ -35,6 +36,7 @@ const store = new Vuex.Store({
   },
   modules: {
     web3Module,
+    contractModule,
   },
 });
 

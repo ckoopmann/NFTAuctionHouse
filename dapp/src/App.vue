@@ -10,6 +10,7 @@
           </v-avatar>
         </router-link>
         <v-spacer />
+        <WithdrawCreditDialogue v-if="isConnected" />
         <div v-if="isConnected" :title="selectedAccount" class="connected">
           Connected: {{ selectedAccount }}
         </div>
@@ -53,7 +54,7 @@
         </div>
       </v-navigation-drawer>
       <div>
-        <v-card v-if="errorType != null" class="mx-auto my-12" max-width="500">
+        <v-card v-if="false" class="mx-auto my-12" max-width="500">
           <v-card-text>{{ this.errorMessage }}</v-card-text></v-card
         >
         <router-view v-else />
@@ -66,10 +67,11 @@
 import { mapGetters } from "vuex";
 
 import ConnectButton from "./components/ConnectButton.vue";
+import WithdrawCreditDialogue from "./components/WithdrawCreditDialogue.vue";
 
 export default {
   name: "ParetoMarket",
-  components: { ConnectButton },
+  components: { ConnectButton, WithdrawCreditDialogue },
 
   data() {
     return {
@@ -77,11 +79,12 @@ export default {
       clipped: true,
       drawer: false,
       constantItems: [
-        { icon: "mdi-magnify", title: "Search Item", to: "/dapp/search" },
+        { icon: "mdi-home", title: "About", to: "/" },
+        { icon: "mdi-magnify", title: "Open Auctions", to: "/openAuctions" },
         {
           icon: "mdi-plus-box",
-          title: "Sell Item",
-          to: "/dapp/new",
+          title: "Create Auction",
+          to: "/new",
         },
       ],
     };

@@ -6,7 +6,9 @@
   "author": "Christian Koopmann",
   "license": "MIT",
   "scripts": {
-      "test:contracts": "hardhat test"
+    "test:contracts": "hardhat test",
+    "deploy": "hardhat run --network localhost scripts/deploy.js",
+    "chain": "hardhat node"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.3.0",

@@ -119,7 +119,6 @@ async function deployERC1155Contract(ethers) {
 
   const baseURI = "https://example.domain/{id}.json";
 
-  // Deploy ERC1155 contract
   testERC1155Contract = await TestERC1155.deploy(baseURI);
   await testERC1155Contract.deployed();
 
@@ -134,7 +133,6 @@ async function deployERC721Contract(ethers) {
   const tokenName = "TestERC721";
   const symbol = "T721";
 
-  // Deploy ERC721 contract
   testERC721Contract = await TestERC721.deploy(tokenName, symbol, baseURI);
   await testERC721Contract.deployed();
 
