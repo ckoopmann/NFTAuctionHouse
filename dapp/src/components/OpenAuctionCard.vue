@@ -30,12 +30,29 @@
         <v-list-item-title>Seller </v-list-item-title>
         <v-list-item-subtitle>{{ sellerParsed }}</v-list-item-subtitle>
       </v-list-item>
+
+      <v-card-actions>
+        <v-spacer></v-spacer>
+
+        <v-btn
+          color="blue darken-1"
+          type="button"
+          @click.prevent="cancelAuctionButton"
+          :loading="loading"
+          :disabled="loading"
+        >
+          Cancel Auction
+          <template #loader>
+            <span>Loading...</span>
+          </template>
+        </v-btn>
+      </v-card-actions>
     </v-card-text>
   </v-card>
 </template>
 
 <script>
-import { mapGetters } from "vuex";
+import { mapGetters, mapActions } from "vuex";
 import { ethers } from "ethers";
 export default {
   props: [
@@ -50,6 +67,11 @@ export default {
     "tokenId",
     "tokenType",
   ],
+  data() {
+    return {
+      loading: false,
+    };
+  },
   computed: {
     ...mapGetters("web3Module", ["selectedAccount"]),
     tokenTypeString() {
@@ -60,7 +82,10 @@ export default {
       return tokenTypeMapping[this.tokenType];
     },
     highestBidderParsed() {
-      if (ethers.utils.getAddress(this.highestBidder) == ethers.utils.getAddress(this.selectedAccount)) {
+      if (
+        ethers.utils.getAddress(this.highestBidder) ==
+        ethers.utils.getAddress(this.selectedAccount)
+      ) {
         return "You";
       }
       if (this.highestBidder == ethers.constants.AddressZero) {
@@ -69,10 +94,30 @@ export default {
       return this.highestBidder;
     },
     sellerParsed() {
-      if (ethers.utils.getAddress(this.seller) == ethers.utils.getAddress(this.selectedAccount)) {
+      if (
+        ethers.utils.getAddress(this.seller) ==
+        ethers.utils.getAddress(this.selectedAccount)
+      ) {
         return "You";
       }
       return this.seller;
+    },
+  },
+  methods: {
+    ...mapActions("contractModule", ["cancelAuction", "loadAuctions"]),
+    async cancelAuctionButton() {
+      try {
+        this.loading = true;
+        console.log(`Canceling Auction ${this.auctionId}`);
+        await this.cancelAuction({
+          auctionId: this.auctionId,
+        });
+        await this.loadAuctions();
+      } catch (e) {
+        console.error("Cancling auction failed with: ", e);
+      } finally {
+        this.loading = false;
+      }
     },
   },
 };

@@ -7,7 +7,7 @@
 <script>
 import NewAuctionCard from "../components/NewAuctionCard.vue";
 export default {
-  name: "New Auction",
+  name: "NewAuction",
   components: { NewAuctionCard },
 };
 </script>

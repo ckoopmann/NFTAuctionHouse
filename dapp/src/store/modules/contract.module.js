@@ -76,13 +76,14 @@ const contractModule = {
       console.log("Signer: ", signer);
 
       const { tokenType, tokenId, tokenContractAddress } = payload;
+      let approveTokenTx;
       if (tokenType == "ERC721") {
         const nftContract = new ethers.Contract(
           tokenContractAddress,
           ERC721Abi,
           provider
         );
-        await nftContract
+        approveTokenTx = await nftContract
           .connect(signer)
           .approve(marketContract.address, tokenId);
       }
@@ -92,10 +93,18 @@ const contractModule = {
           ERC1155Abi,
           provider
         );
-        await nftContract
+        approveTokenTx = await nftContract
           .connect(signer)
           .setApprovalForAll(marketContract.address, true);
       }
+      await approveTokenTx.wait();
+    },
+    async cancelAuction({ rootGetters }, { auctionId }) {
+      const signer = rootGetters["web3Module/signer"];
+      const cancelAuctionTx = await marketContract
+        .connect(signer)
+        .cancelAuction(auctionId);
+      await cancelAuctionTx.wait();
     },
     async createAuction({ rootGetters }, payload) {
       const {
@@ -111,7 +120,7 @@ const contractModule = {
       const signer = rootGetters["web3Module/signer"];
       const processedStartingPrice = ethers.utils.parseUnits(startingPrice);
       console.log("Signer: ", signer);
-      await marketContract
+      const createAuctionTx = await marketContract
         .connect(signer)
         .createAuction(
           tokenContractAddress,
@@ -121,6 +130,7 @@ const contractModule = {
           tokenTypeInts[tokenType],
           quantity
         );
+      await createAuctionTx.wait();
     },
     async registerListeners() {
       console.log("Registering contract listeners");

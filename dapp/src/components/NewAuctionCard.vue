@@ -113,7 +113,11 @@ export default {
     };
   },
   methods: {
-    ...mapActions("contractModule", ["approveToken", "createAuction"]),
+    ...mapActions("contractModule", [
+      "approveToken",
+      "createAuction",
+      "loadAuctions",
+    ]),
 
     async approveTokenButton() {
       try {
@@ -149,6 +153,7 @@ export default {
           expiryDate: this.expiryDate,
         });
         this.approved = false;
+        this.loadAuctions();
       } catch (e) {
         console.error("Create Auction failed with exception: ", e);
       } finally {
@@ -161,10 +166,11 @@ export default {
         ethers.utils.isAddress(address) || "Please provide a valid address"
       );
     },
+
     notNullAddress(address) {
       return (
         address !== "0x0000000000000000000000000000000000000000" ||
-        "Cannot play against 0 address"
+        "Cannot set Zero Address"
       );
     },
   },

@@ -12,7 +12,7 @@
 import { mapGetters } from "vuex";
 import OpenAuctionCard from "../components/OpenAuctionCard.vue";
 export default {
-  name: "Open Auctions",
+  name: "OpenAuctions",
   components: { OpenAuctionCard },
   computed: mapGetters( "contractModule" , ["openAuctionList"])
 };
