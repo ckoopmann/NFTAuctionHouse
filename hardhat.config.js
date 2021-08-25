@@ -39,5 +39,19 @@ task("time", "Set time to given date")
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
+  networks: {
+    rinkeby: {
+      url: url("rinkeby"),
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
+    matic: {
+      url: url("matic"),
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
+  },
   solidity: "0.8.4",
 };
