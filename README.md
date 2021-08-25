@@ -1,4 +1,4 @@
-![Tests](https://github.com/ckoopmann/NFTAuctionHouse/actions/workflows/integrate/badge.svg)
+![Tests](https://github.com/ckoopmann/NFTAuctionHouse/actions/workflows/integrate.yml/badge.svg)
 # NFT Auction House
 
 A decentralized application to sell ERC721/1155 Tokens in an auction mechanism.
