@@ -70,7 +70,7 @@ import ConnectButton from "./components/ConnectButton.vue";
 import WithdrawCreditDialogue from "./components/WithdrawCreditDialogue.vue";
 
 export default {
-  name: "ParetoMarket",
+  name: "NFTAuctionHouse",
   components: { ConnectButton, WithdrawCreditDialogue },
 
   data() {

@@ -1,4 +1,4 @@
-# pareto-market
+# NFT Auction House
 
 ## Project setup
 ```

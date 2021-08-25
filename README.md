@@ -1,2 +1,2 @@
-# ParetoMarket
+# NFT Auction House
 NFT Marketplace
