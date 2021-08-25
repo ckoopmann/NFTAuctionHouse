@@ -10,6 +10,16 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
+function url(network) {
+  try {
+    const urls = require("./urls.json");
+    return urls[network];
+  } catch (e) {
+    console.log("WARNING: No urls file");
+  }
+  return "";
+}
+
 task("time", "Set time to given date")
   .addParam(
     "timestamp",
