@@ -1,24 +1,23 @@
-# NFT Auction House
+# Frontend - UI
+This source code implements the UI / Frontend as deployed at [nftauctionhouse.xyz](https://nftauctionhouse.xyz/).
+The implementation is based on the Vue.js (2) framework and uses the following plugins:
+- Vuex for state management
+- Vue-router for routing
+- Vuetify for Material Design UI components
 
 ## Project setup
+### Install dependencies
 ```
-npm install
+yarn install
 ```
 
 ### Compiles and hot-reloads for development
 ```
-npm run serve
+yarn serve
 ```
 
 ### Compiles and minifies for production
 ```
-npm run build
+yarn build
 ```
 
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
