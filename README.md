@@ -1,4 +1,5 @@
 ![Tests](https://github.com/ckoopmann/NFTAuctionHouse/actions/workflows/integrate.yml/badge.svg)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/b9cee689-6848-483f-b2a2-0e70b7b76220/deploy-status)](https://app.netlify.com/sites/gifted-jepsen-f72e4d/deploys)
 # NFT Auction House
 
 A decentralized application to sell ERC721/1155 Tokens in an auction mechanism.
