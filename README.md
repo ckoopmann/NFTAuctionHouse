@@ -20,7 +20,7 @@ contracts for minting free tokens that you can use in the dapp.
 
 ## Deployment
 
-You can find a demo version of the frontend DApp running at [nftauctionhouse.xyz](http://nftauctionhouse.xyz).
+You can find a demo version of the frontend DApp running at [nftauctionhouse.xyz](https://nftauctionhouse.xyz).
 To use it you will need to have Metamask installed and connected to the Rinkeby Testnet.
 You will also need Rinkeby ETH which you can get for free [here](https://faucet.rinkeby.io/)
 
