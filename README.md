@@ -46,5 +46,5 @@ as well as individual methods.
 All contract tests can be found in the [test](test) directory.
 
 ### Frontend UI
-The user interface that is deployed under above mentioned domain is implemented as a Vue application,
-the source code of which can be found in the [dapp](dapp)
+The user interface that is deployed under above mentioned domain is implemented as a [Vue.js](https://vuejs.org/) application,
+the source code of which can be found in the [dapp](dapp) directory.
