@@ -35,11 +35,16 @@ The general workflow for trading tokens on NFTAuctionHouse is the following:
 5. Upon expiry token is transferred to highest bidder and seller is credited with sale price
 6. Users withdraw their credit through the Dapp
 
-## Contracts
-### Source Code
+## Implementation
+### Contracts
+#### Source Code
 The solidity code for all contracts can be found in the [contracts](contracts) directory.
 
-### Tests
+#### Tests
 The marketplace contract is thoroughly tested with an array of unittests checking the overall workflow described above 
 as well as individual methods.
 All contract tests can be found in the [test](test) directory.
+
+### Frontend UI
+The user interface that is deployed under above mentioned domain is implemented as a Vue application,
+the source code of which can be found in the [dapp](dapp)
