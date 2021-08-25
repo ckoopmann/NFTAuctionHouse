@@ -37,9 +37,9 @@ The general workflow for trading tokens on NFTAuctionHouse is the following:
 
 ## Contracts
 ### Source Code
-The solidity code for all contracts can be found in the [contracts][contracts] directory.
+The solidity code for all contracts can be found in the [contracts](contracts) directory.
 
 ### Tests
 The marketplace contract is thoroughly tested with an array of unittests checking the overall workflow described above 
 as well as individual methods.
-All contract tests can be found in the [tests](tests) directory.
+All contract tests can be found in the [test](test) directory.
