@@ -1,4 +1,6 @@
 require("@nomiclabs/hardhat-waffle");
+require("@nomiclabs/hardhat-etherscan");
+const fs = require("fs");
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -9,6 +11,37 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
     console.log(account.address);
   }
 });
+
+function url(network) {
+  try {
+    const urls = require("./urls.json");
+    return urls[network];
+  } catch (e) {
+    console.log("WARNING: No urls file");
+  }
+  return "";
+}
+
+function mnemonic() {
+  try {
+    return fs.readFileSync("./mnemonic.txt").toString().trim();
+  } catch (e) {
+    console.log("WARNING: No mnemonic file");
+  }
+  return "";
+}
+
+function etherscanKey() {
+  try {
+    return fs.readFileSync("./etherscanKey.txt").toString().trim();
+  } catch (e) {
+    console.log("WARNING: No etherscanKey file");
+  }
+  return "";
+}
+
+
+
 
 task("time", "Set time to given date")
   .addParam(
@@ -29,5 +62,24 @@ task("time", "Set time to given date")
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
+  networks: {
+    rinkeby: {
+      url: url("rinkeby"),
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
+    matic: {
+      url: url("matic"),
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
+  },
+  etherscan: {
+    // Your API key for Etherscan
+    // Obtain one at https://etherscan.io/
+    apiKey: etherscanKey(),
+  },
   solidity: "0.8.4",
 };

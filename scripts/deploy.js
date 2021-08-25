@@ -7,11 +7,16 @@ const hre = require("hardhat");
 const fs = require("fs");
 const { mintTestToken } = require("../test/helpers");
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function deployContract(contractName, constructorArgs) {
   const abiPath = `dapp/src/contracts/abis/${contractName}.json`;
   const addressPath = `dapp/src/contracts/addresses/${contractName}.json`;
 
   const factory = await ethers.getContractFactory(contractName);
+  console.log(`Deploying contract ${contractName}`);
   if (constructorArgs != null) {
     contract = await factory.deploy(...constructorArgs);
   } else {
@@ -35,6 +40,14 @@ async function deployContract(contractName, constructorArgs) {
     `${contractName} on network ${chainId} deployed to:`,
     contract.address
   );
+
+  await sleep(60 * 1000);
+  // Verify on etherscan
+  await hre.run("verify:verify", {
+    address: contract.address,
+    constructorArguments: constructorArgs,
+  });
+  console.log(`${contractName} on network ${chainId} verified`);
   return contract;
 }
 async function main() {
@@ -67,16 +80,17 @@ async function main() {
     symbol,
     baseURI,
   ]);
-  const [owner] = await ethers.getSigners();
-  await mintTestToken(testERC721Contract, owner, "ERC721");
-  console.log(`Minted ERC721 TestToken for ${owner.address}`)
 
-  const testERC1155Contract = await deployContract("TestERC1155", [
-    baseURI,
-  ]);
-  await mintTestToken(testERC1155Contract, owner, "ERC1155");
-  console.log(`Minted ERC1155 TestToken for ${owner.address}`)
+  const testERC1155Contract = await deployContract("TestERC1155", [baseURI]);
 
+  const { chainId } = await ethers.provider.getNetwork();
+  if (chainId == 31337) {
+    const [owner] = await ethers.getSigners();
+    mintTestToken(testERC721Contract, owner, "ERC721");
+    console.log(`Minted ERC721 TestToken for ${owner.address}`);
+    mintTestToken(testERC1155Contract, owner, "ERC1155");
+    console.log(`Minted ERC1155 TestToken for ${owner.address}`);
+  }
 }
 
 // We recommend this pattern to be able to use async/await everywhere

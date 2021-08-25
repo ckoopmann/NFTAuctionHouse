@@ -5,3 +5,8 @@ node_modules
 #Hardhat files
 cache
 artifacts
+
+#Secret files
+mnemonic.txt
+urls.json
+etherscanKey.txt
